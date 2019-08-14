@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Map</title>
+    <link
+      rel="stylesheet"
+      href="node_modules\bootstrap\dist\css\bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="form-group">
+        <label>Select captured window</label>
+        <div class="form-inline">
+          <select
+            class="form-control remove-right-radius"
+            id="screenshot-window-list"
+          >
+          </select>
+          <button
+            class="btn btn-primary remove-left-radius"
+            id="refresh-windows-list-button"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="form-group d-flex flex-column">
+                <button class="btn btn-primary" id="screenshot-button">
+                  Take a Screenshot (Ctrl+Shift+M)
+                </button>
+              </div>
+              <div
+                class="screenshot-list-container"
+                id="map-screenshot-list"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-8">
+          <div class="card">
+            <div class="card-body">
+              <div id="stage-parent">
+                <div
+                  id="mapContainer"
+                  style="width: 704px; height: 704px;"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card">
+            <div class="card-body">
+              <form>
+                <div class="form-group d-flex flex-column">
+                  <input
+                    id="new-map-name-input"
+                    class="form-control remove-bottom-radius"
+                    type="text"
+                    placeholder="Add new map..."
+                  />
+                  <button
+                    type="submit"
+                    class="btn btn-success remove-top-radius"
+                    id="new-map-button"
+                  >
+                    Add new Map
+                  </button>
+                </div>
+              </form>
+              <div class="list-group" id="map-link-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  require("./mapRenderer.js");
+</script>

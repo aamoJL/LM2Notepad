@@ -1,0 +1,38 @@
+body {
+  overflow-y: hidden;
+}
+
+.json-text-container {
+  height: 600px;
+  overflow-y: auto;
+}
+
+.screenshot-list-container {
+  height: 600px;
+  overflow-y: auto;
+}
+
+#stage-parent {
+  width: 100%;
+  overflow: hidden;
+}
+
+.remove-bottom-radius {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.remove-top-radius {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.remove-left-radius {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.remove-right-radius {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
