@@ -12,20 +12,23 @@
   </head>
   <body>
     <div class="container-fluid">
-      <div class="form-group">
+      <div class="form-group w-25">
         <label>Select captured window</label>
-        <div class="form-inline">
+        <div class="input-group d-flex flex-row">
           <select
             class="form-control remove-right-radius"
             id="screenshot-window-list"
           >
           </select>
-          <button
-            class="btn btn-primary remove-left-radius"
-            id="refresh-windows-list-button"
-          >
-            Refresh
-          </button>
+          <div class="input-group-append">
+            <button class="btn btn-primary" id="refresh-windows-list-button">
+              <img
+                class="img-center"
+                src="icons/refresh.svg"
+                alt="refresh window list"
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -39,7 +42,13 @@
                   class="btn btn-primary remove-bottom-radius"
                   id="scan-button"
                 >
-                  Scan and Save a Screenshot (Ctrl+Shift+A)
+                  <img src="icons/scan.svg" alt="scan and save screenshot" />
+                  <img
+                    src="icons/addscreenshot.svg"
+                    alt="scan and save screenshot"
+                  />
+                  <br />
+                  (Ctrl+Shift+A)
                 </button>
                 <div class="progress remove-top-radius">
                   <div
@@ -68,14 +77,14 @@
                   class="btn btn-success btn-sm remove-top-radius"
                   id="save-scan-button"
                 >
-                  Save a Note (Ctrl+Shift+S)
+                  <img src="icons/addnote.svg" alt="add new note" />
                 </button>
               </div>
             </div>
           </div>
           <div class="card mb-3">
             <div class="card-body">
-              <div class="form-group">
+              <div class="form-group d-flex flex-column">
                 <div class="form-check-inline">
                   <input
                     class="form-check-input"
@@ -85,11 +94,11 @@
                   />
                   <label class="form-check-label">Crop the Screenshot</label>
                 </div>
-                <div class="form-check-inline">
-                  <button id="screenshot-button" class="btn btn-primary">
-                    Save a Screenshot (Ctrl+Shift+X)
-                  </button>
-                </div>
+                <button id="screenshot-button" class="btn btn-primary">
+                  <img src="icons/addscreenshot.svg" alt="save a screenshot" />
+                  <br />
+                  (Ctrl+Shift+X)
+                </button>
               </div>
             </div>
           </div>

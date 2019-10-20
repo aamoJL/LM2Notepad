@@ -65,6 +65,39 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
   };
 }
 
+/** Adds marker image to Konva Layer
+ *
+ * @param {string} imagePath -Path to the image
+ * @param {{x: number, y: number}} position -Images position in canvas
+ * @param {*} layer -Konva layer object
+ * @param {Function} callback -Optional, Returns the image object that was created.
+ */
+function addMarkerToLayer(imagePath, position, layer, callback) {
+  let imageId = path.parse(imagePath).name;
+  let newImg = new Image();
+  newImg.src = imagePath;
+
+  newImg.onload = function() {
+    var image = new Konva.Image({
+      image: newImg,
+      x: position.x,
+      y: position.y,
+      width: 70,
+      height: 70,
+      draggable: false,
+      imageId: imageId,
+      opacity: 0.8
+    });
+
+    layer.add(image);
+    layer.draw();
+
+    if (callback !== undefined) {
+      callback(image);
+    }
+  };
+}
+
 /** Adds line to Konva layer
  *
  * @param {{startX: number, startY: number, endX: number, endY: number}} positions -Point positions for the line
@@ -99,7 +132,6 @@ function getRelativePointerPosition(node) {
   // get pointer (say mouse or touch) position
   var pos = node.getStage().getPointerPosition();
 
-  // now we find relative point
   return transform.point(pos);
 }
 
@@ -173,6 +205,41 @@ function loadMapLayerFromJSON(JSONPath, stage, settings, imageOnChange) {
   return newLayer;
 }
 
+/** Returns Konva Layer with map markers from JSON file
+ *
+ * @param {string} JSONPath -Path to map's marker JSON file
+ * @param {*} stage -Konva stage
+ * @param {mapMarkerIconFolderPath: string} mapMarkerIconFolderPath -Settings for the map
+ * @param {Function} imageOnChange -Callback for images when the image has been moved or deleted
+ *
+ * @returns {*} -Konva Layer
+ */
+function loadMapMarkerLayerFromJSON(
+  JSONPath,
+  stage,
+  mapMarkerIconFolderPath,
+  imageOnChange
+) {
+  let newLayer = new Konva.Layer();
+  try {
+    let jsonString = fs.readFileSync(JSONPath);
+    let children = JSON.parse(jsonString).children;
+    children.forEach(child => {
+      addMarkerToLayer(
+        mapMarkerIconFolderPath + child.attrs.imageId + ".svg",
+        { x: child.attrs.x, y: child.attrs.y },
+        newLayer,
+        image => {
+          addEventsToMapMarker(image, newLayer, stage, () => {
+            imageOnChange();
+          });
+        }
+      );
+    });
+  } catch (error) {}
+  return newLayer;
+}
+
 /** Adds events to map image
  *
  * @param {Image} image -The image the events will be added to
@@ -196,19 +263,66 @@ function addEventsToMapImage(image, layer, cellSize, stage, onChange) {
     if (onChange && onChange());
   });
   image.on("dragstart", e => {
+    // 4: middle mouse button
     if (e.evt.buttons === 4) {
       image.stopDrag();
     }
   });
   image.on("mousedown", e => {
+    // 0: left mouse button
     if (e.evt.button === 0) {
       image.draggable(true);
     } else {
       image.draggable(false);
     }
+    // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete image
-      if (window.confirm("Delete?")) {
+      if (window.confirm("Delete map image?")) {
+        image.destroy();
+        layer.draw();
+
+        if (onChange && onChange());
+      }
+    }
+  });
+  image.on("mouseenter", function() {
+    stage.container().style.cursor = "move";
+  });
+  image.on("mouseleave", function() {
+    stage.container().style.cursor = "default";
+  });
+}
+
+/** Adds events to map marker
+ *
+ * @param {Image} image -The image the events will be added to
+ * @param {*} layer -Konva layer the image is in
+ * @param {*} stage -Konva stage the layer is in
+ * @param {Function} onChange -Callback for image deletion
+ */
+function addEventsToMapMarker(image, layer, stage, onChange) {
+  image.on("dragend", function() {
+    layer.batchDraw();
+    if (onChange && onChange());
+  });
+  image.on("dragstart", e => {
+    // 4: middle mouse button
+    if (e.evt.buttons === 4) {
+      image.stopDrag();
+    }
+  });
+  image.on("mousedown", e => {
+    // 0: left mouse button
+    if (e.evt.button === 0) {
+      image.draggable(true);
+    } else {
+      image.draggable(false);
+    }
+    // 2: right mouse button
+    if (e.evt.button === 2) {
+      // Delete image
+      if (window.confirm("Delete marker?")) {
         image.destroy();
         layer.draw();
 
@@ -233,5 +347,8 @@ module.exports = {
   fitStageIntoParentContainer,
   saveLayerToJSON,
   loadMapLayerFromJSON,
-  addEventsToMapImage
+  addEventsToMapImage,
+  addMarkerToLayer,
+  loadMapMarkerLayerFromJSON,
+  addEventsToMapMarker
 };

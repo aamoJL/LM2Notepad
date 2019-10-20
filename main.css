@@ -17,6 +17,10 @@ body {
   overflow: hidden;
 }
 
+.map-icon {
+  width: 50px;
+}
+
 .remove-bottom-radius {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -35,4 +39,9 @@ body {
 .remove-right-radius {
   border-bottom-right-radius: 0;
   border-top-right-radius: 0;
+}
+
+.img-center {
+  display: flex;
+  height: 1.2em;
 }

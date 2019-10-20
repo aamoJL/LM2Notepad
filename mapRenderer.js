@@ -16,6 +16,8 @@ const containerParent = document.getElementById("stage-parent");
 const mapScreenshotFolder = "./screenshots/map/";
 // Path to map JSON files
 const mapJSONFolder = "./maps/";
+const mapMarkersJSONFolder = "./maps/markers/";
+const mapMarkerIconFolder = "./icons/";
 // Settings for cropping the map screenshot
 const mapCropOptions = {
   x: 65,
@@ -42,6 +44,7 @@ let stage = new Konva.Stage({
 });
 let gridLayer = new Konva.Layer();
 let mapLayer = new Konva.Layer();
+let markerLayer = new Konva.Layer();
 // #endregion
 
 // #region : Init the page
@@ -102,46 +105,6 @@ $("#new-map-button").on("click", function(e) {
   newMapNameInput.val("");
 });
 
-/** Load map images to stage
- *
- * @param {string} mapName -Name of the map
- */
-function LoadMap(mapName) {
-  if (mapName === "") {
-    return alert("No map selected");
-  }
-  let mapPath = mapJSONFolder + mapName + ".json";
-  // Get new map layer
-  let newMapLayer = mapDrawing.loadMapLayerFromJSON(
-    mapPath,
-    stage,
-    {
-      mapImageFolderPath: mapScreenshotFolder,
-      cellSize: cellSize
-    },
-    () => {
-      saveMap(selectedMap);
-    }
-  );
-  // Remove old map layer
-  mapLayer.destroy();
-  // Add the new layer to stage
-  stage.add(newMapLayer);
-  mapLayer = newMapLayer;
-}
-
-/** Saves map layer to a file
- *
- * @param {string} mapName -Name of the map
- */
-function saveMap(mapName) {
-  if (mapName === "") {
-    return alert("No map selected");
-  }
-  let mapPath = mapJSONFolder + mapName + ".json";
-  mapDrawing.saveLayerToJSON(mapLayer, mapPath);
-}
-
 // Stage events
 stage.on("wheel", e => {
   e.evt.preventDefault();
@@ -173,17 +136,21 @@ stage.on("mousedown", e => {
 
 // Init the map canvas
 stage.add(mapLayer);
+stage.add(markerLayer);
 stage.add(gridLayer);
 mapDrawing.drawGrid(7, 7, cellSize, gridLayer);
+gridLayer.moveToBottom();
 
 // Add image drag and drop to screenshot list
 // Konva canvas container
 let container = stage.container();
 // Path to image that is being dragged
+let dragItemType = "";
 let dragItemURL = "";
 document
   .getElementById("map-screenshot-list")
   .addEventListener("dragstart", function(e) {
+    dragItemType = "image";
     dragItemURL = e.target.src;
   });
 container.addEventListener("dragover", function(e) {
@@ -192,25 +159,121 @@ container.addEventListener("dragover", function(e) {
 container.addEventListener("drop", function(e) {
   e.preventDefault();
   stage.setPointersPositions(e);
-  let position = mapDrawing.alignPositionToGrid(
-    mapDrawing.getRelativePointerPosition(mapLayer),
-    cellSize
-  );
-
-  mapDrawing.addMapImageToLayer(
-    dragItemURL,
-    { x: position.x, y: position.y },
-    cellSize,
-    mapLayer,
-    image => {
-      mapDrawing.addEventsToMapImage(image, mapLayer, cellSize, stage, () => {
+  if (dragItemType === "image") {
+    let position = mapDrawing.alignPositionToGrid(
+      mapDrawing.getRelativePointerPosition(mapLayer),
+      cellSize
+    );
+    mapDrawing.addMapImageToLayer(
+      dragItemURL,
+      { x: position.x, y: position.y },
+      cellSize,
+      mapLayer,
+      image => {
+        mapDrawing.addEventsToMapImage(image, mapLayer, cellSize, stage, () => {
+          saveMap(selectedMap);
+        });
         saveMap(selectedMap);
-      });
-      saveMap(selectedMap);
+      }
+    );
+  } else if (dragItemType === "icon") {
+    let position = mapDrawing.getRelativePointerPosition(markerLayer);
+    mapDrawing.addMarkerToLayer(
+      dragItemURL,
+      { x: position.x - 35, y: position.y - 35 },
+      markerLayer,
+      image => {
+        mapDrawing.addEventsToMapMarker(image, markerLayer, stage, () => {
+          saveMapMarkers(selectedMap);
+        });
+        saveMapMarkers(selectedMap);
+      }
+    );
+  }
+  dragItemType = "";
+});
+
+// Drag and drop for map tools
+document
+  .getElementById("map-tools-container")
+  .addEventListener("dragstart", function(e) {
+    dragItemType = "icon";
+    dragItemURL = e.target.src;
+  });
+
+// #endregion
+
+/** Load map images to stage
+ *
+ * @param {string} mapName -Name of the map
+ */
+function loadMap(mapName) {
+  if (mapName === "") {
+    return alert("No map selected");
+  }
+  let mapPath = mapJSONFolder + mapName + ".json";
+  // Get new map layer
+  let newMapLayer = mapDrawing.loadMapLayerFromJSON(
+    mapPath,
+    stage,
+    {
+      mapImageFolderPath: mapScreenshotFolder,
+      cellSize: cellSize
+    },
+    () => {
+      saveMap(mapName);
     }
   );
-});
-// #endregion
+  // Remove old map layer
+  mapLayer.destroy();
+  // Add the new layer to stage
+  stage.add(newMapLayer);
+  mapLayer = newMapLayer;
+  // Move the new mapLayer under icon layer
+  mapLayer.moveDown();
+}
+
+function loadMapMarkers(mapName) {
+  if (mapName === "") {
+    return alert("No map selected");
+  }
+  let markersPath = mapMarkersJSONFolder + mapName + "-markers.json";
+  let newMarkerLayer = mapDrawing.loadMapMarkerLayerFromJSON(
+    markersPath,
+    stage,
+    mapMarkerIconFolder,
+    () => {
+      saveMapMarkers(mapName);
+    }
+  );
+  // Remove old marker layer
+  markerLayer.destroy();
+  // Add new marker layer to stage
+  stage.add(newMarkerLayer);
+  markerLayer = newMarkerLayer;
+  // Move marker layer to top
+  markerLayer.moveToTop();
+}
+
+/** Saves map layer to a file
+ *
+ * @param {string} mapName -Name of the map
+ */
+function saveMap(mapName) {
+  if (mapName === "") {
+    return alert("No map selected");
+  }
+  let mapPath = mapJSONFolder + mapName + ".json";
+  mapDrawing.saveLayerToJSON(mapLayer, mapPath);
+}
+
+function saveMapMarkers(mapName) {
+  if (mapName === "") {
+    return alert("No map selected");
+  }
+  let markersPath = mapMarkersJSONFolder + mapName + "-markers.json";
+  mapDrawing.saveLayerToJSON(markerLayer, markersPath);
+}
 
 /** Gets all available window names and adds them to dropdown list.
  *
@@ -271,6 +334,10 @@ function refreshMapLinkList() {
   // Get files in directory
   fs.readdir(mapJSONFolder, (err, dir) => {
     $.each(dir, function(index, value) {
+      // Only json files are valid maps
+      if (path.parse(value).ext !== ".json") {
+        return;
+      }
       let mapName = path.parse(value).name;
       // Name of the map without spaces for button ID
       var mapNameNoSpaces = mapName.replace(/\s+/g, "-");
@@ -308,7 +375,8 @@ function selectMap(mapName) {
   $(`#${mapNameNoSpaces}-button`).addClass("active");
 
   if (mapName !== "") {
-    LoadMap(mapName);
+    loadMap(mapName);
+    loadMapMarkers(mapName);
   }
 }
 

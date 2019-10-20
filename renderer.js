@@ -263,18 +263,27 @@ function JSONtoScanCardElement(cardInfo) {
           <div class="flex-grow-1">
             <button class="btn btn-primary btn-sm" id="edit-button-${
               cardInfo.id
-            }">Edit</button>
-            <button class="btn btn-primary btn-sm d-none" id="cancel-button-${
+            }">
+              <img src="icons/edit.svg" alt="edit note" />
+            </button>
+            <button class="btn btn-warning btn-sm d-none" id="cancel-button-${
               cardInfo.id
-            }">Cancel</button>
+            }">
+              <img src="icons/cancel.svg" alt="cancel note changes" />
+            </button>
             <button class="btn btn-success btn-sm d-none" id="save-button-${
               cardInfo.id
-            }">Save</button>
+            }">
+            <img src="icons/save.svg" alt="save note changes" />
+            </button>
           </div>
           <div class="align-self-end">
             <button class="btn btn-danger btn-sm" id="remove-card-button-${
               cardInfo.id
-            }">Delete</button>
+            }">
+            <img src="icons/delete.svg" alt="delete note" />
+            
+            </button>
           </div>
         </div>
       </div>
