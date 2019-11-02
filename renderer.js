@@ -183,6 +183,7 @@ function refreshWindowsList() {
  */
 function refreshScanCardList() {
   var container = $("#json-text-container");
+  var currentScrollPosition = container.scrollTop();
   // clear the card container
   container.empty();
 
@@ -228,6 +229,8 @@ function refreshScanCardList() {
         $(`#card-textarea-${value.id}`).toggleClass("d-none");
       });
     });
+
+    container.scrollTop(currentScrollPosition);
   });
 }
 
@@ -282,7 +285,6 @@ function JSONtoScanCardElement(cardInfo) {
               cardInfo.id
             }">
             <img src="icons/delete.svg" alt="delete note" />
-            
             </button>
           </div>
         </div>
