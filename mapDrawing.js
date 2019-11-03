@@ -98,6 +98,38 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
   };
 }
 
+/** Adds text to Konva Layer
+ *
+ * @param {string} text -Text that will be added to layer
+ * @param {{x: number, y: number}} position -Images position in canvas
+ * @param {*} layer -Konva layer object
+ * @param {Function} callback -Optional, Returns the text object that was created.
+ */
+function addTextToLayer(text, position, layer, callback) {
+  // Don't add the text if it is empty
+  if (text === "") {
+    return;
+  }
+
+  var textNode = new Konva.Text({
+    text: text,
+    x: position.x,
+    y: position.y,
+    fontSize: 50,
+    draggable: false,
+    width: 400,
+    fill: "white",
+    stroke: "black",
+    strokeWidth: 3,
+    fontStyle: "bold"
+  });
+
+  layer.add(textNode);
+  layer.batchDraw();
+
+  if (callback && callback(textNode));
+}
+
 /** Adds line to Konva layer
  *
  * @param {{startX: number, startY: number, endX: number, endY: number}} positions -Point positions for the line
@@ -225,16 +257,29 @@ function loadMapMarkerLayerFromJSON(
     let jsonString = fs.readFileSync(JSONPath);
     let children = JSON.parse(jsonString).children;
     children.forEach(child => {
-      addMarkerToLayer(
-        mapMarkerIconFolderPath + child.attrs.imageId + ".svg",
-        { x: child.attrs.x, y: child.attrs.y },
-        newLayer,
-        image => {
-          addEventsToMapMarker(image, newLayer, stage, () => {
-            imageOnChange();
-          });
-        }
-      );
+      if (child.className === "Image") {
+        addMarkerToLayer(
+          mapMarkerIconFolderPath + child.attrs.imageId + ".svg",
+          { x: child.attrs.x, y: child.attrs.y },
+          newLayer,
+          image => {
+            addEventsToMapMarker(image, newLayer, stage, () => {
+              imageOnChange();
+            });
+          }
+        );
+      } else if (child.className === "Text") {
+        addTextToLayer(
+          child.attrs.text,
+          { x: child.attrs.x, y: child.attrs.y },
+          newLayer,
+          textNode => {
+            addEventsToMapText(textNode, newLayer, stage, () => {
+              imageOnChange();
+            });
+          }
+        );
+      }
     });
   } catch (error) {}
   return newLayer;
@@ -338,6 +383,50 @@ function addEventsToMapMarker(image, layer, stage, onChange) {
   });
 }
 
+/** Adds events to map text
+ *
+ * @param {*} textNode -The text the events will be added to
+ * @param {*} layer -Konva layer the image is in
+ * @param {*} stage -Konva stage the layer is in
+ * @param {Function} onChange -Callback for image deletion
+ */
+function addEventsToMapText(textNode, layer, stage, onChange) {
+  textNode.on("dragend", function() {
+    layer.batchDraw();
+    if (onChange && onChange());
+  });
+  textNode.on("dragstart", e => {
+    // 4: middle mouse button
+    if (e.evt.buttons === 4) {
+      textNode.stopDrag();
+    }
+  });
+  textNode.on("mousedown", e => {
+    // 0: left mouse button
+    if (e.evt.button === 0) {
+      textNode.draggable(true);
+    } else {
+      textNode.draggable(false);
+    }
+    // 2: right mouse button
+    if (e.evt.button === 2) {
+      // Delete text
+      if (window.confirm("Delete text?")) {
+        textNode.destroy();
+        layer.draw();
+
+        if (onChange && onChange());
+      }
+    }
+  });
+  textNode.on("mouseenter", function() {
+    stage.container().style.cursor = "move";
+  });
+  textNode.on("mouseleave", function() {
+    stage.container().style.cursor = "default";
+  });
+}
+
 module.exports = {
   drawGrid,
   addMapImageToLayer,
@@ -350,5 +439,7 @@ module.exports = {
   addEventsToMapImage,
   addMarkerToLayer,
   loadMapMarkerLayerFromJSON,
-  addEventsToMapMarker
+  addEventsToMapMarker,
+  addTextToLayer,
+  addEventsToMapText
 };

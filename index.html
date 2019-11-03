@@ -21,7 +21,11 @@
           >
           </select>
           <div class="input-group-append">
-            <button class="btn btn-primary" id="refresh-windows-list-button">
+            <button
+              class="btn btn-primary hovertooltip"
+              id="refresh-windows-list-button"
+            >
+              <span class="tooltiptext">Refresh window list</span>
               <img
                 class="img-center"
                 src="icons/refresh.svg"
@@ -39,9 +43,10 @@
             <div class="card-body">
               <div class="form-group d-flex flex-column">
                 <button
-                  class="btn btn-primary remove-bottom-radius"
+                  class="btn btn-primary remove-bottom-radius hovertooltip"
                   id="scan-button"
                 >
+                  <span class="tooltiptext">Scan and take a screenshot</span>
                   <img src="icons/scan.svg" alt="scan and save screenshot" />
                   <img
                     src="icons/addscreenshot.svg"
@@ -74,9 +79,10 @@
                   placeholder="write a note..."
                 ></textarea>
                 <button
-                  class="btn btn-success btn-sm remove-top-radius"
+                  class="btn btn-success btn-sm remove-top-radius hovertooltip"
                   id="save-scan-button"
                 >
+                  <span class="tooltiptext">Add new note</span>
                   <img src="icons/addnote.svg" alt="add new note" />
                 </button>
               </div>
@@ -94,7 +100,11 @@
                   />
                   <label class="form-check-label">Crop the Screenshot</label>
                 </div>
-                <button id="screenshot-button" class="btn btn-primary">
+                <button
+                  id="screenshot-button"
+                  class="btn btn-primary hovertooltip"
+                >
+                  <span class="tooltiptext">Take a screenshot</span>
                   <img src="icons/addscreenshot.svg" alt="save a screenshot" />
                   <br />
                   (Ctrl+Shift+X)

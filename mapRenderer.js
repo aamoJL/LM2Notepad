@@ -141,22 +141,42 @@ stage.add(gridLayer);
 mapDrawing.drawGrid(7, 7, cellSize, gridLayer);
 gridLayer.moveToBottom();
 
+// Drag and drop for map tools in map tools container
+Array.from(
+  document
+    .getElementById("map-tools-container")
+    .getElementsByClassName("map-icon")
+).forEach(element => {
+  element.addEventListener("dragstart", function(e) {
+    dragItemType = "icon";
+    dragItemURL = e.target.src;
+  });
+});
+
+// Drag and drop for text
+document.getElementById("map-text").addEventListener("dragstart", function(e) {
+  dragItemType = "text";
+  dragItemURL = e.target.src;
+});
+
 // Add image drag and drop to screenshot list
-// Konva canvas container
-let container = stage.container();
-// Path to image that is being dragged
-let dragItemType = "";
-let dragItemURL = "";
 document
   .getElementById("map-screenshot-list")
   .addEventListener("dragstart", function(e) {
     dragItemType = "image";
     dragItemURL = e.target.src;
   });
-container.addEventListener("dragover", function(e) {
+
+// Konva canvas container
+let stageContainer = stage.container();
+// Path to image that is being dragged
+let dragItemType = "";
+let dragItemURL = "";
+
+stageContainer.addEventListener("dragover", function(e) {
   e.preventDefault();
 });
-container.addEventListener("drop", function(e) {
+stageContainer.addEventListener("drop", function(e) {
   e.preventDefault();
   stage.setPointersPositions(e);
   if (dragItemType === "image") {
@@ -189,17 +209,24 @@ container.addEventListener("drop", function(e) {
         saveMapMarkers(selectedMap);
       }
     );
+  } else if (dragItemType === "text") {
+    let position = mapDrawing.getRelativePointerPosition(markerLayer);
+    // add text to layer
+    var textInput = $("#map-text-input");
+    var text = textInput.val();
+    if (text !== "" && text !== null) {
+      mapDrawing.addTextToLayer(text, position, markerLayer, textNode => {
+        // Events
+        mapDrawing.addEventsToMapText(textNode, markerLayer, stage, () => {
+          saveMapMarkers(selectedMap);
+        });
+        saveMapMarkers(selectedMap);
+      });
+    }
+    textInput.val("");
   }
   dragItemType = "";
 });
-
-// Drag and drop for map tools
-document
-  .getElementById("map-tools-container")
-  .addEventListener("dragstart", function(e) {
-    dragItemType = "icon";
-    dragItemURL = e.target.src;
-  });
 
 // #endregion
 

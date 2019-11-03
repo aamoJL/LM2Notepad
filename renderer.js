@@ -264,26 +264,30 @@ function JSONtoScanCardElement(cardInfo) {
           id="card-textarea-${cardInfo.id}">${cardInfo.text}</textarea>
         <div class="d-flex">
           <div class="flex-grow-1">
-            <button class="btn btn-primary btn-sm" id="edit-button-${
+            <button class="btn btn-primary btn-sm hovertooltip" id="edit-button-${
               cardInfo.id
             }">
+            <span class="tooltiptext">Edit</span>
               <img src="icons/edit.svg" alt="edit note" />
             </button>
-            <button class="btn btn-warning btn-sm d-none" id="cancel-button-${
+            <button class="btn btn-warning btn-sm d-none hovertooltip" id="cancel-button-${
               cardInfo.id
             }">
+            <span class="tooltiptext">Cancel</span>
               <img src="icons/cancel.svg" alt="cancel note changes" />
             </button>
-            <button class="btn btn-success btn-sm d-none" id="save-button-${
+            <button class="btn btn-success btn-sm d-none hovertooltip" id="save-button-${
               cardInfo.id
             }">
+            <span class="tooltiptext">Save</span>
             <img src="icons/save.svg" alt="save note changes" />
             </button>
           </div>
           <div class="align-self-end">
-            <button class="btn btn-danger btn-sm" id="remove-card-button-${
+            <button class="btn btn-danger btn-sm hovertooltip" id="remove-card-button-${
               cardInfo.id
             }">
+            <span class="tooltiptext">Delete</span>
             <img src="icons/delete.svg" alt="delete note" />
             </button>
           </div>
