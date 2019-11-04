@@ -64,38 +64,49 @@
           </div>
         </div>
         <div class="col-8">
-          <div class="row card">
-            <div id="map-tools-container">
-              <img class="map-icon img-thumbnail" src="./icons/checkmark.svg" />
-              <img class="map-icon img-thumbnail" src="./icons/warning.svg" />
+          <div class="row">
+            <div id="map-tools-container" class="d-flex map-tools">
               <img
-                class="map-icon img-thumbnail"
+                class="map-icon border border-bottom-0"
+                src="./icons/checkmark.svg"
+              />
+              <img
+                class="map-icon border border-bottom-0"
+                src="./icons/warning.svg"
+              />
+              <img
+                class="map-icon border border-bottom-0"
                 src="./icons/shoppingcart.svg"
               />
-              <img class="map-icon img-thumbnail" src="./icons/gear.svg" />
-              <img class="map-icon img-thumbnail" src="./icons/in.svg" />
-              <img class="map-icon img-thumbnail" src="./icons/question.svg" />
-              <img class="map-icon img-thumbnail" src="./icons/block.svg" />
               <img
-                id="map-text"
-                class="map-text img-thumbnail"
-                src="./icons/text.svg"
+                class="map-icon border border-bottom-0"
+                src="./icons/gear.svg"
               />
-              <input
-                type="text"
-                id="map-text-input"
-                placeholder="Add text to map..."
+              <img
+                class="map-icon border border-bottom-0"
+                src="./icons/in.svg"
               />
+              <img
+                class="map-icon border border-bottom-0"
+                src="./icons/question.svg"
+              />
+              <img
+                class="map-icon border border-bottom-0"
+                src="./icons/block.svg"
+              />
+              <div class="border border-bottom-0 d-flex">
+                <img id="map-text" class="map-icon" src="./icons/text.svg" />
+                <input
+                  type="text"
+                  id="map-text-input"
+                  placeholder="Add text to map..."
+                />
+              </div>
             </div>
           </div>
-          <div class="row card">
-            <div class="card-body">
-              <div id="stage-parent">
-                <div
-                  id="mapContainer"
-                  style="width: 704px; height: 604px;"
-                ></div>
-              </div>
+          <div class="row">
+            <div class="border" id="stage-parent">
+              <div id="mapContainer" style="width: 704px; height: 640px;"></div>
             </div>
           </div>
           <div>

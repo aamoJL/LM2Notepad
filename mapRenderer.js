@@ -82,6 +82,7 @@ $(window).on("load", () => {
     stage
   );
 });
+
 // adapt the stage on any window resize
 $(window).on("resize", () => {
   mapDrawing.fitStageIntoParentContainer(

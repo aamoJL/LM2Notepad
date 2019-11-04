@@ -17,12 +17,17 @@ body {
   overflow: hidden;
 }
 
-.map-icon {
-  width: 50px;
+.map-tools {
+  height: 50px;
 }
 
-.map-text {
+.map-icon {
   width: 50px;
+  margin-right: 5px;
+}
+
+.map-text-container .map-icon {
+  margin-right: 0px;
 }
 
 .remove-bottom-radius {
