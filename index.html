@@ -24,8 +24,9 @@
             <button
               class="btn btn-primary hovertooltip"
               id="refresh-windows-list-button"
+              data-toggle="tooltip"
+              title="Refresh the window list"
             >
-              <span class="tooltiptext">Refresh window list</span>
               <img
                 class="img-center"
                 src="icons/refresh.svg"
@@ -43,10 +44,11 @@
             <div class="card-body">
               <div class="form-group d-flex flex-column">
                 <button
-                  class="btn btn-primary remove-bottom-radius hovertooltip"
+                  class="btn btn-primary remove-bottom-radius"
                   id="scan-button"
+                  data-toggle="tooltip"
+                  title="Take and scan a screenshot"
                 >
-                  <span class="tooltiptext">Scan and take a screenshot</span>
                   <img src="icons/scan.svg" alt="scan and save screenshot" />
                   <img
                     src="icons/addscreenshot.svg"
@@ -79,10 +81,11 @@
                   placeholder="write a note..."
                 ></textarea>
                 <button
-                  class="btn btn-success btn-sm remove-top-radius hovertooltip"
+                  class="btn btn-success btn-sm remove-top-radius"
                   id="save-scan-button"
+                  data-toggle="tooltip"
+                  title="Save the note"
                 >
-                  <span class="tooltiptext">Add new note</span>
                   <img src="icons/addnote.svg" alt="add new note" />
                 </button>
               </div>
@@ -102,9 +105,10 @@
                 </div>
                 <button
                   id="screenshot-button"
-                  class="btn btn-primary hovertooltip"
+                  class="btn btn-primary"
+                  data-toggle="tooltip"
+                  title="Take a screenshot"
                 >
-                  <span class="tooltiptext">Take a screenshot</span>
                   <img src="icons/addscreenshot.svg" alt="save a screenshot" />
                   <br />
                   (Ctrl+Shift+X)

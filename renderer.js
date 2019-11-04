@@ -6,6 +6,7 @@ const { globalShortcut } = remote;
 const screenCapture = require("./screenCapture.js");
 const scanning = require("./scanning.js");
 const path = require("path");
+require("bootstrap");
 
 // #region Screenshot options --------------------------
 
@@ -52,8 +53,9 @@ window.addEventListener("beforeunload", () => {
 
 $(window).on("load", () => {
   refreshWindowsList();
-  //updateScreenshotImage();
-  refreshScanCardList();
+  refreshScanCardList(() => {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
 });
 
 // Button clicks -------------------------
@@ -90,7 +92,9 @@ function takeAndSaveScreenshot() {
       noteScreenshotFolder,
       function(imagePath) {
         scanning.saveScanToJSONFile("", path.parse(imagePath).name, () => {
-          refreshScanCardList();
+          refreshScanCardList(() => {
+            $('[data-toggle="tooltip"]').tooltip();
+          });
         });
       }
     );
@@ -131,7 +135,9 @@ function scanAndSaveScreenshot() {
               result.text,
               path.parse(imgPath).name,
               () => {
-                refreshScanCardList();
+                refreshScanCardList(() => {
+                  $('[data-toggle="tooltip"]').tooltip();
+                });
               }
             );
           }
@@ -147,9 +153,11 @@ function scanAndSaveScreenshot() {
 function saveNote() {
   var scanText = $("#scan-text");
   if (scanText.val() !== "") {
-    scanning.saveScanToJSONFile(scanText.val(), "", () =>
-      refreshScanCardList()
-    );
+    scanning.saveScanToJSONFile(scanText.val(), "", () => {
+      refreshScanCardList(() => {
+        $('[data-toggle="tooltip"]').tooltip();
+      });
+    });
     // Clear textarea
     scanText.val("");
   }
@@ -181,9 +189,10 @@ function refreshWindowsList() {
 /** Updates list that displays scan cards
  *
  */
-function refreshScanCardList() {
+function refreshScanCardList(callback) {
   var container = $("#json-text-container");
   var currentScrollPosition = container.scrollTop();
+  $('[data-toggle="tooltip"]').tooltip("hide");
   // clear the card container
   container.empty();
 
@@ -195,9 +204,11 @@ function refreshScanCardList() {
       container.append(JSONtoScanCardElement(value));
       // Add button click events to card buttons
       $(`#remove-card-button-${value.id}`).on("click", function() {
-        scanning.deleteScanText(value.id, noteScreenshotFolder, () =>
-          refreshScanCardList()
-        );
+        scanning.deleteScanText(value.id, noteScreenshotFolder, () => {
+          refreshScanCardList(() => {
+            $('[data-toggle="tooltip"]').tooltip();
+          });
+        });
       });
       $(`#edit-button-${value.id}`).on("click", function() {
         $(`#edit-button-${value.id}`).toggleClass("d-none");
@@ -217,7 +228,9 @@ function refreshScanCardList() {
           $(`#card-textarea-${value.id}`).val(),
           function() {
             // Update scan card list when the edit has been saved
-            refreshScanCardList();
+            refreshScanCardList(() => {
+              $('[data-toggle="tooltip"]').tooltip();
+            });
           }
         );
       });
@@ -229,6 +242,8 @@ function refreshScanCardList() {
         $(`#card-textarea-${value.id}`).toggleClass("d-none");
       });
     });
+
+    if (callback && callback());
 
     container.scrollTop(currentScrollPosition);
   });
@@ -264,30 +279,26 @@ function JSONtoScanCardElement(cardInfo) {
           id="card-textarea-${cardInfo.id}">${cardInfo.text}</textarea>
         <div class="d-flex">
           <div class="flex-grow-1">
-            <button class="btn btn-primary btn-sm hovertooltip" id="edit-button-${
+            <button class="btn btn-primary btn-sm" id="edit-button-${
               cardInfo.id
-            }">
-            <span class="tooltiptext">Edit</span>
+            }" data-toggle="tooltip" title="Edit">
               <img src="icons/edit.svg" alt="edit note" />
             </button>
-            <button class="btn btn-warning btn-sm d-none hovertooltip" id="cancel-button-${
+            <button class="btn btn-warning btn-sm d-none" id="cancel-button-${
               cardInfo.id
-            }">
-            <span class="tooltiptext">Cancel</span>
+            }" data-toggle="tooltip" title="Cancel">
               <img src="icons/cancel.svg" alt="cancel note changes" />
             </button>
-            <button class="btn btn-success btn-sm d-none hovertooltip" id="save-button-${
+            <button class="btn btn-success btn-sm d-none" id="save-button-${
               cardInfo.id
-            }">
-            <span class="tooltiptext">Save</span>
+            }" data-toggle="tooltip" title="Save">
             <img src="icons/save.svg" alt="save note changes" />
             </button>
           </div>
           <div class="align-self-end">
-            <button class="btn btn-danger btn-sm hovertooltip" id="remove-card-button-${
+            <button class="btn btn-danger btn-sm" id="remove-card-button-${
               cardInfo.id
-            }">
-            <span class="tooltiptext">Delete</span>
+            }" data-toggle="tooltip" title="Delete">
             <img src="icons/delete.svg" alt="delete note" />
             </button>
           </div>

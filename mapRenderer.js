@@ -8,6 +8,7 @@ const Konva = require("konva");
 const path = require("path");
 const $ = require("jquery");
 const fs = require("fs");
+require("bootstrap");
 
 // #region : Map settings
 // Container that has the Konva container as a child
@@ -62,6 +63,10 @@ window.addEventListener("beforeunload", () => {
   globalShortcut.unregister("CommandOrControl+shift+M", () =>
     takeAndScanThumbnail()
   );
+});
+
+$(document).ready(function() {
+  $('[data-toggle="tooltip"]').tooltip();
 });
 
 $(window).on("load", () => {
