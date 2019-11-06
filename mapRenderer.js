@@ -162,7 +162,12 @@ Array.from(
 // Drag and drop for text
 document.getElementById("map-text").addEventListener("dragstart", function(e) {
   dragItemType = "text";
-  dragItemURL = e.target.src;
+  dragItemURL = "";
+});
+
+document.getElementById("map-arrow").addEventListener("dragstart", function(e) {
+  dragItemType = "arrow";
+  dragItemURL = "";
 });
 
 // Add image drag and drop to screenshot list
@@ -230,6 +235,22 @@ stageContainer.addEventListener("drop", function(e) {
       });
     }
     textInput.val("");
+  } else if (dragItemType === "arrow") {
+    let position = mapDrawing.getRelativePointerPosition(markerLayer);
+    //add arrow to layer
+    let endPointOffset = 200;
+    let points = [
+      position.x - endPointOffset,
+      position.y,
+      position.x + endPointOffset,
+      position.y
+    ];
+    mapDrawing.addArrowToLayer(points, markerLayer, objects => {
+      mapDrawing.addEventsToMapArrow(objects, markerLayer, stage, () => {
+        saveMapMarkers(selectedMap);
+      });
+      saveMapMarkers(selectedMap);
+    });
   }
   dragItemType = "";
 });

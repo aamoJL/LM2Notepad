@@ -21,9 +21,8 @@ body {
   height: 50px;
 }
 
-.map-icon {
+.width-50 {
   width: 50px;
-  margin-right: 5px;
 }
 
 .map-text-container .map-icon {

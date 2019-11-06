@@ -152,6 +152,87 @@ function addLineToLayer(positions, layer) {
   layer.add(line);
 }
 
+/**
+ * Add arrow object to Konva layer
+ *
+ * @param {number[]} points - Arrow's starting and ending positions, [x1,y1,x2,y2]
+ * @param {*} layer - The Konva layer
+ * @param {function} callback - Callback function that takes arrow object list as a parameter
+ */
+function addArrowToLayer(points, layer, callback) {
+  const arrow = new Konva.Arrow({
+    type: "Arrow",
+    points: points,
+    fill: "black",
+    stroke: "black",
+    strokeWidth: 10,
+    pointerAtBeginning: true,
+    pointerLength: 40,
+    pointerWidth: 40,
+    draggable: false
+  });
+
+  const arrowStroke = new Konva.Arrow({
+    type: "Stroke",
+    points: points,
+    fill: "white",
+    stroke: "white",
+    strokeWidth: 5,
+    pointerAtBeginning: true,
+    pointerLength: 40,
+    pointerWidth: 40,
+    draggable: false
+  });
+
+  const startCircle = new Konva.Circle({
+    x: points[0],
+    y: points[1],
+    radius: 30,
+    opacity: 0.1,
+    fill: "white",
+    stroke: "black",
+    strokeWidth: 4,
+    draggable: false
+  });
+
+  const endCircle = new Konva.Circle({
+    x: points[2],
+    y: points[3],
+    radius: 30,
+    fill: "white",
+    opacity: 0.1,
+    stroke: "black",
+    strokeWidth: 4,
+    draggable: false
+  });
+
+  layer.add(arrow);
+  layer.add(startCircle);
+  layer.add(endCircle);
+  layer.add(arrowStroke);
+
+  // Connector circles will be over the arrow, so they need to be moved
+  let connectorPos = getArrowConnectorPoints(startCircle, endCircle, -50);
+  startCircle.x(connectorPos[0]);
+  startCircle.y(connectorPos[1]);
+  endCircle.x(connectorPos[2]);
+  endCircle.y(connectorPos[3]);
+
+  updateArrowPosition(arrow, arrowStroke, startCircle, endCircle);
+  layer.batchDraw();
+
+  if (callback) {
+    objects = {
+      arrow: arrow,
+      arrowStroke: arrowStroke,
+      startCircle: startCircle,
+      endCircle: endCircle
+    };
+
+    callback(objects);
+  }
+}
+
 /** Gets pointer positions that is relative to given node
  *
  * @param {*} node -Konva object
@@ -237,20 +318,21 @@ function loadMapLayerFromJSON(JSONPath, stage, settings, imageOnChange) {
   return newLayer;
 }
 
-/** Returns Konva Layer with map markers from JSON file
+/**
+ * Returns Konva Layer with map markers from JSON file
  *
  * @param {string} JSONPath -Path to map's marker JSON file
  * @param {*} stage -Konva stage
- * @param {mapMarkerIconFolderPath: string} mapMarkerIconFolderPath -Settings for the map
- * @param {Function} imageOnChange -Callback for images when the image has been moved or deleted
+ * @param {string} mapMarkerIconFolderPath -Settings for the map
+ * @param {Function} onChange - Callback function that will be called when something changes on map
  *
- * @returns {*} -Konva Layer
+ * @returns {*} Konva Layer
  */
 function loadMapMarkerLayerFromJSON(
   JSONPath,
   stage,
   mapMarkerIconFolderPath,
-  imageOnChange
+  onChange
 ) {
   let newLayer = new Konva.Layer();
   try {
@@ -264,7 +346,7 @@ function loadMapMarkerLayerFromJSON(
           newLayer,
           image => {
             addEventsToMapMarker(image, newLayer, stage, () => {
-              imageOnChange();
+              onChange();
             });
           }
         );
@@ -275,10 +357,23 @@ function loadMapMarkerLayerFromJSON(
           newLayer,
           textNode => {
             addEventsToMapText(textNode, newLayer, stage, () => {
-              imageOnChange();
+              onChange();
             });
           }
         );
+      } else if (child.className === "Arrow" && child.attrs.type === "Arrow") {
+        const points = [
+          child.attrs.points[0],
+          child.attrs.points[1],
+          child.attrs.points[2],
+          child.attrs.points[3]
+        ];
+        addArrowToLayer(points, newLayer, objects => {
+          // Events
+          addEventsToMapArrow(objects, newLayer, stage, () => {
+            onChange();
+          });
+        });
       }
     });
   } catch (error) {}
@@ -427,6 +522,169 @@ function addEventsToMapText(textNode, layer, stage, onChange) {
   });
 }
 
+/**
+ * Add map events to map arrow
+ *
+ * @param {{arrow : *, arrowStroke : *, startCircle : *, endCircle : *}} arrowObjects - Arrow objects
+ * @param {*} layer - Arrow's Konva layer
+ * @param {*} stage - Konva stage
+ * @param {function} onChange - Function that will be called when the arrow changes
+ */
+function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
+  arrowObjects.startCircle.on("dragend", () => {
+    updateArrowPosition(
+      arrowObjects.arrow,
+      arrowObjects.arrowStroke,
+      arrowObjects.startCircle,
+      arrowObjects.endCircle
+    );
+    layer.batchDraw();
+    if (onChange && onChange());
+  });
+  arrowObjects.startCircle.on("dragmove", () => {
+    updateArrowPosition(
+      arrowObjects.arrow,
+      arrowObjects.arrowStroke,
+      arrowObjects.startCircle,
+      arrowObjects.endCircle
+    );
+    layer.batchDraw();
+  });
+  arrowObjects.startCircle.on("dragstart", e => {
+    // 4: middle mouse button
+    if (e.evt.buttons === 4) {
+      arrowObjects.startCircle.stopDrag();
+    }
+  });
+  arrowObjects.startCircle.on("mousedown", e => {
+    // 0: left mouse button
+    if (e.evt.button === 0) {
+      arrowObjects.startCircle.draggable(true);
+    } else {
+      arrowObjects.startCircle.draggable(false);
+    }
+    // 2: right mouse button
+    if (e.evt.button === 2) {
+      // Delete arrow
+      if (window.confirm("Delete arrow?")) {
+        arrowObjects.arrow.destroy();
+        arrowObjects.arrowStroke.destroy();
+        arrowObjects.startCircle.destroy();
+        arrowObjects.endCircle.destroy();
+        layer.batchDraw();
+
+        if (onChange && onChange());
+      }
+    }
+  });
+  arrowObjects.endCircle.on("dragend", () => {
+    updateArrowPosition(
+      arrowObjects.arrow,
+      arrowObjects.arrowStroke,
+      arrowObjects.startCircle,
+      arrowObjects.endCircle
+    );
+    layer.batchDraw();
+    if (onChange && onChange());
+  });
+  arrowObjects.endCircle.on("dragmove", () => {
+    updateArrowPosition(
+      arrowObjects.arrow,
+      arrowObjects.arrowStroke,
+      arrowObjects.startCircle,
+      arrowObjects.endCircle
+    );
+    layer.batchDraw();
+  });
+  arrowObjects.endCircle.on("dragstart", e => {
+    // 4: middle mouse button
+    if (e.evt.buttons === 4) {
+      arrowObjects.endCircle.stopDrag();
+    }
+  });
+  arrowObjects.endCircle.on("mousedown", e => {
+    // 0: left mouse button
+    if (e.evt.button === 0) {
+      arrowObjects.endCircle.draggable(true);
+    } else {
+      arrowObjects.endCircle.draggable(false);
+    }
+    // 2: right mouse button
+    if (e.evt.button === 2) {
+      // Delete arrow
+      if (window.confirm("Delete arrow?")) {
+        arrowObjects.arrow.destroy();
+        arrowObjects.arrowStroke.destroy();
+        arrowObjects.startCircle.destroy();
+        arrowObjects.endCircle.destroy();
+        layer.batchDraw();
+
+        if (onChange && onChange());
+      }
+    }
+  });
+  arrowObjects.arrow.on("mousedown", e => {
+    // 2: right mouse button
+    if (e.evt.button === 2) {
+      // Delete arrow
+      if (window.confirm("Delete arrow?")) {
+        arrowObjects.arrow.destroy();
+        arrowObjects.arrowStroke.destroy();
+        arrowObjects.startCircle.destroy();
+        arrowObjects.endCircle.destroy();
+        layer.batchDraw();
+
+        if (onChange && onChange());
+      }
+    }
+  });
+  arrowObjects.startCircle.on("mouseenter", function() {
+    stage.container().style.cursor = "move";
+  });
+  arrowObjects.startCircle.on("mouseleave", function() {
+    stage.container().style.cursor = "default";
+  });
+  arrowObjects.endCircle.on("mouseenter", function() {
+    stage.container().style.cursor = "move";
+  });
+  arrowObjects.endCircle.on("mouseleave", function() {
+    stage.container().style.cursor = "default";
+  });
+}
+
+/**
+ * Updates arrow's position
+ *
+ * @param {*} arrow - Konva arrow object
+ * @param {*} stroke - Konva arrow object that is used as a border for the arrow
+ * @param {*} start - Konva object used as a starting point for the arrow
+ * @param {*} end - Konva object used as a ending point for the arrow
+ */
+function updateArrowPosition(arrow, stroke, start, end) {
+  var points = getArrowConnectorPoints(start, end, 50);
+  arrow.points(points);
+  stroke.points(points);
+}
+
+/**
+ * Returns point positions for arrow
+ *
+ * @param {*} from - Konva object
+ * @param {*} to - Konva object
+ */
+function getArrowConnectorPoints(from, to, radius) {
+  const dx = to.x() - from.x();
+  const dy = to.y() - from.y();
+  let angle = Math.atan2(-dy, dx);
+
+  return [
+    from.x() + -radius * Math.cos(angle + Math.PI),
+    from.y() + radius * Math.sin(angle + Math.PI),
+    to.x() + -radius * Math.cos(angle),
+    to.y() + radius * Math.sin(angle)
+  ];
+}
+
 module.exports = {
   drawGrid,
   addMapImageToLayer,
@@ -441,5 +699,7 @@ module.exports = {
   loadMapMarkerLayerFromJSON,
   addEventsToMapMarker,
   addTextToLayer,
-  addEventsToMapText
+  addEventsToMapText,
+  addArrowToLayer,
+  addEventsToMapArrow
 };
