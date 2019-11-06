@@ -287,6 +287,11 @@ function loadMap(mapName) {
   mapLayer.moveDown();
 }
 
+/**
+ * Load map's marker layer
+ *
+ * @param {string} mapName - Name of the map of which marker's will be loaded
+ */
 function loadMapMarkers(mapName) {
   if (mapName === "") {
     return alert("No map selected");
@@ -405,8 +410,11 @@ function refreshMapLinkList() {
         ${mapName}
       </button>
       `);
-      $(`#${mapNameNoSpaces}-button`).on("click", function() {
+      $(`#${mapNameNoSpaces}-button`).on("click", function(e) {
         selectMap(mapName);
+      });
+      $(`#${mapNameNoSpaces}-button`).on("contextmenu", function(e) {
+        deleteMap(mapName);
       });
       if (selectedMap === "" || selectedMap === mapName) {
         selectMap(mapName);
@@ -431,6 +439,36 @@ function selectMap(mapName) {
   if (mapName !== "") {
     loadMap(mapName);
     loadMapMarkers(mapName);
+  }
+}
+
+/**
+ * Delete map files
+ *
+ * @param {string} mapName - Name of the map that will be deleted
+ */
+function deleteMap(mapName) {
+  if (confirm("Delete map: " + mapName)) {
+    if (mapName === "") {
+      alert("Map name can't be empty");
+    }
+
+    var mapNameNoSpaces = mapName.replace(/\s+/g, "-");
+
+    if (selectedMap === mapName) {
+      selectedMap = "";
+    }
+
+    if (fs.existsSync(mapJSONFolder + mapNameNoSpaces + ".json")) {
+      fs.unlinkSync(mapJSONFolder + mapNameNoSpaces + ".json");
+    }
+    if (
+      fs.existsSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json")
+    ) {
+      fs.unlinkSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json");
+    }
+
+    refreshMapLinkList();
   }
 }
 
