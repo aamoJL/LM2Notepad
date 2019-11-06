@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   id="svg2"
+   viewBox="0 0 24 24"
+   height="24"
+   width="24">
+  <metadata
+     id="metadata12">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs10">
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient5615">
+      <stop
+         id="stop5617"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <path
+     id="path4"
+     d="M0 0h24v24H0V0z"
+     fill="none" />
+  <path
+     d="M 12,2 C 6.4800001,2 1.9999998,6.48 1.9999998,12 1.9999998,17.52 6.4800001,22 12,22 17.52,22 22,17.52 22,12 22,6.48 17.52,2 12,2 Z m 0,18 C 7.5900001,20 3.9999998,16.41 3.9999998,12 3.9999998,7.5899999 7.5900001,4.0000001 12,4.0000001 c 4.41,0 8,3.59 8,7.9999999 0,4.41 -3.59,8 -8,8 z"
+     id="path6-3"
+     style="fill:#ffffff;fill-opacity:1" />
+  <circle
+     style="fill:#808080;fill-opacity:1;stroke:none;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path4142"
+     cx="12"
+     cy="12"
+     r="8.7966099" />
+  <path
+     style="fill:#ffffff;fill-opacity:1"
+     d="m 17.309322,8.9578731 c 0,-0.4912127 -0.477839,-0.8931143 -1.061864,-0.8931143 l -8.4949153,0 c -0.5840254,0 -1.0618644,0.4019016 -1.0618644,0.8931143 l 0,5.3586859 c 0,0.491213 0.477839,0.893114 1.0618644,0.893114 l 7.4330503,0 2.123729,1.786229 0,-8.0380289 z"
+     id="path4147" />
+  <g
+     transform="translate(-0.16949165,-5.338983)"
+     id="g4155">
+    <path
+       style="fill:none"
+       d="M 0,0 24,0 24,24 0,24 0,0 Z"
+       id="path4145" />
+  </g>
+</svg>
