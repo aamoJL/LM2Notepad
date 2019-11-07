@@ -1,11 +1,19 @@
+/**
+ * Functions to scan images with Tesseract
+ */
+
 const $ = require("jquery");
 const Tesseract = require("tesseract.js");
 const fs = require("fs");
 
-// Path for the json file that contains scan texts and screenshot paths
-const jsonPath = "./notes.json";
+// Variables --------------------------------------------------------
 
-/** Scans given image
+const jsonPath = "./notes.json"; // Path to notes JSON file
+
+// Functions ---------------------------------------------------------
+
+/**
+ * Scan given image
  *
  * @param {Buffer} source -Image buffer
  * @param {Function} progressCallback -Callback that is called when scanning progress has been made
@@ -27,7 +35,8 @@ function scanImage(source, progressCallback, resultCallback) {
     });
 }
 
-/** Saves scanned text to json file with the scan's screenshot path
+/**
+ * Save scanned text to json file
  *
  * @param {string} text -Scanned text
  * @param {string} screenshotName -Name of the scanned image
@@ -51,7 +60,8 @@ function saveScanToJSONFile(text, screenshotName, callback) {
   });
 }
 
-/** Edits and saves exisiting scan's text
+/**
+ * Edit and save existing scan's text
  *
  * @param {number} id -Scan's id number
  * @param {string} text -New text for the scan
@@ -76,7 +86,8 @@ function editScanText(id, newText, callback) {
   });
 }
 
-/** Removes scanned text from the JSON file
+/**
+ * Remove scanned text from the note text JSON file
  *
  * @param {number} id - Scan text's id that is integer,
  * @param {function} callback - Callback that is called when the text has been removed
@@ -105,6 +116,11 @@ function deleteScanText(id, imageFolder, callback) {
   });
 }
 
+/**
+ * Delete given image file
+ *
+ * @param {string} path - Path to image
+ */
 function removeImage(path) {
   fs.unlinkSync(path, function(err) {
     if (err) throw err;

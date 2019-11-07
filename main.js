@@ -8,7 +8,6 @@ function createWindow(resolution, file) {
 
   win.loadFile(file);
 
-  // win.webContents.openDevTools();
   win.on("closed", () => {
     win = null;
   });
@@ -16,7 +15,7 @@ function createWindow(resolution, file) {
 
 app.on("ready", () => {
   // Notes
-  createWindow({ width: 1200, height: 750 }, "index.html");
+  createWindow({ width: 1200, height: 750 }, "notes.html");
   // Map
   createWindow({ width: 1800, height: 880 }, "map.html");
 });

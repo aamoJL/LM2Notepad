@@ -1,3 +1,7 @@
+/**
+ * Renderer script for notes window
+ */
+
 const electron = require("electron");
 const desktopCapturer = electron.desktopCapturer;
 const $ = require("jquery");
@@ -8,7 +12,7 @@ const scanning = require("./scanning.js");
 const path = require("path");
 require("bootstrap");
 
-// #region Screenshot options --------------------------
+// Screenshot settings ------------------------------------
 
 const noteScreenshotFolder = "./screenshots/notes/";
 const noteTextPath = "./notes.json";
@@ -25,11 +29,10 @@ const scanCropOptions = {
   height: 350
 };
 
-// #endregion
-
-// #region Init page
+// Window events --------------------------------------------
 
 window.addEventListener("load", () => {
+  // Add schortcuts
   globalShortcut.register("CommandOrControl+shift+A", () => {
     scanAndSaveScreenshot();
   });
@@ -42,6 +45,7 @@ window.addEventListener("load", () => {
 });
 
 window.addEventListener("beforeunload", () => {
+  // Unregister shortcuts
   globalShortcut.unregister("CommandOrControl+shift+A", () =>
     scanAndSaveScreenshot()
   );
@@ -52,13 +56,15 @@ window.addEventListener("beforeunload", () => {
 });
 
 $(window).on("load", () => {
+  // Load content
   refreshWindowsList();
-  refreshScanCardList(() => {
+  // Activate tooltips
+  refreshNoteList(() => {
     $('[data-toggle="tooltip"]').tooltip();
   });
 });
 
-// Button clicks -------------------------
+// Button events --------------------------------------
 
 $("#screenshot-button").on("click", function() {
   takeAndSaveScreenshot();
@@ -73,10 +79,10 @@ $("#save-scan-button").on("click", function() {
   saveNote();
 });
 
-// #endregion
+// Content saving functions ---------------------------
 
-/** Takes and saves a screenshot of the selected window
- *
+/**
+ * Take and save a screenshot of the selected window
  */
 function takeAndSaveScreenshot() {
   // Get thumbnail image
@@ -92,7 +98,7 @@ function takeAndSaveScreenshot() {
       noteScreenshotFolder,
       function(imagePath) {
         scanning.saveScanToJSONFile("", path.parse(imagePath).name, () => {
-          refreshScanCardList(() => {
+          refreshNoteList(() => {
             $('[data-toggle="tooltip"]').tooltip();
           });
         });
@@ -101,8 +107,8 @@ function takeAndSaveScreenshot() {
   });
 }
 
-/** Takes a screenshot of the window's thumbnail, scans it and saves it
- *
+/**
+ * Take a screenshot of the window's thumbnail, scan it and save it
  */
 function scanAndSaveScreenshot() {
   // Get thumbnail image
@@ -135,7 +141,7 @@ function scanAndSaveScreenshot() {
               result.text,
               path.parse(imgPath).name,
               () => {
-                refreshScanCardList(() => {
+                refreshNoteList(() => {
                   $('[data-toggle="tooltip"]').tooltip();
                 });
               }
@@ -147,14 +153,14 @@ function scanAndSaveScreenshot() {
   });
 }
 
-/** Saves text from textarea to a file without image and updates scan card list
- *
+/**
+ * Save the text from note text input
  */
 function saveNote() {
   var scanText = $("#scan-text");
   if (scanText.val() !== "") {
     scanning.saveScanToJSONFile(scanText.val(), "", () => {
-      refreshScanCardList(() => {
+      refreshNoteList(() => {
         $('[data-toggle="tooltip"]').tooltip();
       });
     });
@@ -163,8 +169,10 @@ function saveNote() {
   }
 }
 
-/** Gets all available window names and adds them to dropdown list.
- *
+// Other functions ----------------------------------------
+
+/**
+ * Get all available window names and add them to dropdown list
  */
 function refreshWindowsList() {
   desktopCapturer.getSources({ types: ["window"] }, (error, sources) => {
@@ -186,10 +194,10 @@ function refreshWindowsList() {
   });
 }
 
-/** Updates list that displays scan cards
- *
+/**
+ * Update note list
  */
-function refreshScanCardList(callback) {
+function refreshNoteList(callback) {
   var container = $("#json-text-container");
   var currentScrollPosition = container.scrollTop();
   $('[data-toggle="tooltip"]').tooltip("hide");
@@ -201,11 +209,11 @@ function refreshScanCardList(callback) {
     data = data.reverse();
     // Append the container with cards
     $.each(data, function(index, value) {
-      container.append(JSONtoScanCardElement(value));
+      container.append(JSONtoNoteCardElement(value));
       // Add button click events to card buttons
       $(`#remove-card-button-${value.id}`).on("click", function() {
         scanning.deleteScanText(value.id, noteScreenshotFolder, () => {
-          refreshScanCardList(() => {
+          refreshNoteList(() => {
             $('[data-toggle="tooltip"]').tooltip();
           });
         });
@@ -228,7 +236,7 @@ function refreshScanCardList(callback) {
           $(`#card-textarea-${value.id}`).val(),
           function() {
             // Update scan card list when the edit has been saved
-            refreshScanCardList(() => {
+            refreshNoteList(() => {
               $('[data-toggle="tooltip"]').tooltip();
             });
           }
@@ -249,13 +257,14 @@ function refreshScanCardList(callback) {
   });
 }
 
-/** Get card information in HTML element.
+/**
+ * Get note card information in HTML element
  *
  * @param {JSON} cardInfo - Scan information in JSON format.
  *
  * @returns {string} HTML element
  */
-function JSONtoScanCardElement(cardInfo) {
+function JSONtoNoteCardElement(cardInfo) {
   return `<div class="card mb-3">
   <div class="row no-gutters">
     <div class="col-md-7">

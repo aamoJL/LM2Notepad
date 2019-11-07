@@ -1,8 +1,15 @@
+/*
+ * Functions to draw images, texts etc. to Konva canvas.
+ */
+
 const Konva = require("konva");
 const path = require("path");
 const fs = require("fs");
 
-/** Draws grid lines to layer
+// Drawing functions -------------------------------------------
+
+/**
+ * Draw grid lines to Konva layer
  *
  * @param {number} rows -Number of rows
  * @param {number} cols -Number of cols
@@ -32,7 +39,8 @@ function drawGrid(rows, cols, cellSize, layer) {
   layer.draw();
 }
 
-/** Adds image to Konva Layer
+/**
+ * Add image to Konva Layer
  *
  * @param {string} imagePath -Path to the image
  * @param {{x: number, y: number}} position -Images position in canvas
@@ -65,12 +73,13 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
   };
 }
 
-/** Adds marker image to Konva Layer
+/**
+ * Add marker icon to Konva Layer
  *
  * @param {string} imagePath -Path to the image
- * @param {{x: number, y: number}} position -Images position in canvas
+ * @param {{x: number, y: number}} position - Icon's position in canvas
  * @param {*} layer -Konva layer object
- * @param {Function} callback -Optional, Returns the image object that was created.
+ * @param {Function} callback -Optional, returns the image object that was created.
  */
 function addMarkerToLayer(imagePath, position, layer, callback) {
   let imageId = path.parse(imagePath).name;
@@ -98,12 +107,13 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
   };
 }
 
-/** Adds text to Konva Layer
+/**
+ * Add text to Konva Layer
  *
  * @param {string} text -Text that will be added to layer
  * @param {{x: number, y: number}} position -Images position in canvas
  * @param {*} layer -Konva layer object
- * @param {Function} callback -Optional, Returns the text object that was created.
+ * @param {Function} callback -Optional, returns the text object that was created.
  */
 function addTextToLayer(text, position, layer, callback) {
   // Don't add the text if it is empty
@@ -130,7 +140,8 @@ function addTextToLayer(text, position, layer, callback) {
   if (callback && callback(textNode));
 }
 
-/** Adds line to Konva layer
+/**
+ * Add line to Konva layer
  *
  * @param {{startX: number, startY: number, endX: number, endY: number}} positions -Point positions for the line
  * @param {*} layer -Konva layer object the line will be added.
@@ -157,7 +168,7 @@ function addLineToLayer(positions, layer) {
  *
  * @param {number[]} points - Arrow's starting and ending positions, [x1,y1,x2,y2]
  * @param {*} layer - The Konva layer
- * @param {function} callback - Callback function that takes arrow object list as a parameter
+ * @param {function} callback - Optional, callback function that takes arrow object list as a parameter
  */
 function addArrowToLayer(points, layer, callback) {
   const arrow = new Konva.Arrow({
@@ -172,6 +183,7 @@ function addArrowToLayer(points, layer, callback) {
     draggable: false
   });
 
+  // Arrow's border
   const arrowStroke = new Konva.Arrow({
     type: "Stroke",
     points: points,
@@ -233,154 +245,10 @@ function addArrowToLayer(points, layer, callback) {
   }
 }
 
-/** Gets pointer positions that is relative to given node
- *
- * @param {*} node -Konva object
- */
-function getRelativePointerPosition(node) {
-  var transform = node.getAbsoluteTransform().copy();
-  // to detect relative position we need to invert transform
-  transform.invert();
-
-  // get pointer (say mouse or touch) position
-  var pos = node.getStage().getPointerPosition();
-
-  return transform.point(pos);
-}
-
-/** Aligns given position to grid
- *
- * @param {{x: number, y: number}} position -Position in canvas
- * @param {{x: number, y: number}} cellSize -X and Y sizes for grid cells
- *
- * @returns {{x: number, y: number}}
- */
-function alignPositionToGrid(position, cellSize) {
-  let x = parseInt(position.x / cellSize.x) * cellSize.x;
-  let y = parseInt(position.y / cellSize.y) * cellSize.y;
-
-  return { x: x, y: y };
-}
-
-/** Make the Konva canvas responsive
- *
- */
-function fitStageIntoParentContainer(container, mapSize, stage) {
-  // now we need to fit stage into parent
-  var containerWidth = container.offsetWidth;
-  // to do this we need to scale the stage
-  var scale = containerWidth / mapSize.width;
-
-  stage.width(mapSize.width * scale);
-  stage.height(mapSize.height * scale);
-  stage.draw();
-}
-
-/** Save Konva layer to json file
- *
- * @param {*} layer -Konva Layer
- * @param {string} path -Path to the json file
- */
-function saveLayerToJSON(layer, path) {
-  let layerJSON = layer.toJSON();
-
-  fs.writeFile(path, layerJSON, () => {});
-}
-
-/** Returns Konva Layer with map images from JSON file
- *
- * @param {string} JSONPath -Path to map's JSON file
- * @param {*} stage -Konva stage
- * @param {{mapImageFolderPath: string, cellSize: {x: number, y: number}}} settings -Settings for the map
- * @param {Function} imageOnChange -Callback for images when the image has been moved or deleted
- *
- * @returns {*} -Konva Layer
- */
-function loadMapLayerFromJSON(JSONPath, stage, settings, imageOnChange) {
-  let newLayer = new Konva.Layer();
-  let jsonString = fs.readFileSync(JSONPath);
-  try {
-    let children = JSON.parse(jsonString).children;
-    children.forEach(child => {
-      addMapImageToLayer(
-        settings.mapImageFolderPath + child.attrs.imageId + ".png",
-        { x: child.attrs.x, y: child.attrs.y },
-        settings.cellSize,
-        newLayer,
-        image => {
-          addEventsToMapImage(image, newLayer, settings.cellSize, stage, () => {
-            imageOnChange();
-          });
-        }
-      );
-    });
-  } catch (error) {}
-  return newLayer;
-}
+// Event functions ------------------------------------------------
 
 /**
- * Returns Konva Layer with map markers from JSON file
- *
- * @param {string} JSONPath -Path to map's marker JSON file
- * @param {*} stage -Konva stage
- * @param {string} mapMarkerIconFolderPath -Settings for the map
- * @param {Function} onChange - Callback function that will be called when something changes on map
- *
- * @returns {*} Konva Layer
- */
-function loadMapMarkerLayerFromJSON(
-  JSONPath,
-  stage,
-  mapMarkerIconFolderPath,
-  onChange
-) {
-  let newLayer = new Konva.Layer();
-  try {
-    let jsonString = fs.readFileSync(JSONPath);
-    let children = JSON.parse(jsonString).children;
-    children.forEach(child => {
-      if (child.className === "Image") {
-        addMarkerToLayer(
-          mapMarkerIconFolderPath + child.attrs.imageId + ".svg",
-          { x: child.attrs.x, y: child.attrs.y },
-          newLayer,
-          image => {
-            addEventsToMapMarker(image, newLayer, stage, () => {
-              onChange();
-            });
-          }
-        );
-      } else if (child.className === "Text") {
-        addTextToLayer(
-          child.attrs.text,
-          { x: child.attrs.x, y: child.attrs.y },
-          newLayer,
-          textNode => {
-            addEventsToMapText(textNode, newLayer, stage, () => {
-              onChange();
-            });
-          }
-        );
-      } else if (child.className === "Arrow" && child.attrs.type === "Arrow") {
-        const points = [
-          child.attrs.points[0],
-          child.attrs.points[1],
-          child.attrs.points[2],
-          child.attrs.points[3]
-        ];
-        addArrowToLayer(points, newLayer, objects => {
-          // Events
-          addEventsToMapArrow(objects, newLayer, stage, () => {
-            onChange();
-          });
-        });
-      }
-    });
-  } catch (error) {}
-  return newLayer;
-}
-
-/** Adds events to map image
+ * Add events to map image
  *
  * @param {Image} image -The image the events will be added to
  * @param {*} layer -Konva layer the image is in
@@ -434,7 +302,8 @@ function addEventsToMapImage(image, layer, cellSize, stage, onChange) {
   });
 }
 
-/** Adds events to map marker
+/**
+ * Add events to map marker
  *
  * @param {Image} image -The image the events will be added to
  * @param {*} layer -Konva layer the image is in
@@ -478,7 +347,8 @@ function addEventsToMapMarker(image, layer, stage, onChange) {
   });
 }
 
-/** Adds events to map text
+/**
+ * Add events to map text
  *
  * @param {*} textNode -The text the events will be added to
  * @param {*} layer -Konva layer the image is in
@@ -652,8 +522,163 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
   });
 }
 
+// Saving / Loading functions --------------------------------------
+
 /**
- * Updates arrow's position
+ * Save Konva layer to json file
+ *
+ * @param {*} layer -Konva Layer
+ * @param {string} path -Path to the json file
+ */
+function saveLayerToJSON(layer, path) {
+  let layerJSON = layer.toJSON();
+
+  fs.writeFile(path, layerJSON, () => {});
+}
+
+/**
+ * Get Konva Layer with map images from JSON file
+ *
+ * @param {string} JSONPath -Path to map's JSON file
+ * @param {*} stage -Konva stage
+ * @param {{mapImageFolderPath: string, cellSize: {x: number, y: number}}} settings -Settings for the map
+ * @param {Function} imageOnChange -Callback for images when the image has been moved or deleted
+ *
+ * @returns {*} -Konva Layer
+ */
+function loadMapLayerFromJSON(JSONPath, stage, settings, imageOnChange) {
+  let newLayer = new Konva.Layer();
+  let jsonString = fs.readFileSync(JSONPath);
+  try {
+    let children = JSON.parse(jsonString).children;
+    children.forEach(child => {
+      addMapImageToLayer(
+        settings.mapImageFolderPath + child.attrs.imageId + ".png",
+        { x: child.attrs.x, y: child.attrs.y },
+        settings.cellSize,
+        newLayer,
+        image => {
+          addEventsToMapImage(image, newLayer, settings.cellSize, stage, () => {
+            imageOnChange();
+          });
+        }
+      );
+    });
+  } catch (error) {}
+  return newLayer;
+}
+
+/**
+ * Get Konva Layer with map markers from JSON file
+ *
+ * @param {string} JSONPath -Path to map's marker JSON file
+ * @param {*} stage -Konva stage
+ * @param {string} mapMarkerIconFolderPath -Settings for the map
+ * @param {Function} onChange - Callback function that will be called when something changes on map
+ *
+ * @returns {*} Konva Layer
+ */
+function loadMapMarkerLayerFromJSON(
+  JSONPath,
+  stage,
+  mapMarkerIconFolderPath,
+  onChange
+) {
+  let newLayer = new Konva.Layer();
+  try {
+    let jsonString = fs.readFileSync(JSONPath);
+    let children = JSON.parse(jsonString).children;
+    children.forEach(child => {
+      if (child.className === "Image") {
+        addMarkerToLayer(
+          mapMarkerIconFolderPath + child.attrs.imageId + ".svg",
+          { x: child.attrs.x, y: child.attrs.y },
+          newLayer,
+          image => {
+            addEventsToMapMarker(image, newLayer, stage, () => {
+              onChange();
+            });
+          }
+        );
+      } else if (child.className === "Text") {
+        addTextToLayer(
+          child.attrs.text,
+          { x: child.attrs.x, y: child.attrs.y },
+          newLayer,
+          textNode => {
+            addEventsToMapText(textNode, newLayer, stage, () => {
+              onChange();
+            });
+          }
+        );
+      } else if (child.className === "Arrow" && child.attrs.type === "Arrow") {
+        const points = [
+          child.attrs.points[0],
+          child.attrs.points[1],
+          child.attrs.points[2],
+          child.attrs.points[3]
+        ];
+        addArrowToLayer(points, newLayer, objects => {
+          // Events
+          addEventsToMapArrow(objects, newLayer, stage, () => {
+            onChange();
+          });
+        });
+      }
+    });
+  } catch (error) {}
+  return newLayer;
+}
+
+// Other functions -------------------------------------------------------
+
+/**
+ * Get pointer positions that is relative to given node
+ *
+ * @param {*} node -Konva object
+ */
+function getRelativePointerPosition(node) {
+  var transform = node.getAbsoluteTransform().copy();
+  // to detect relative position we need to invert transform
+  transform.invert();
+
+  // get pointer (say mouse or touch) position
+  var pos = node.getStage().getPointerPosition();
+
+  return transform.point(pos);
+}
+
+/**
+ * Align given position to grid
+ *
+ * @param {{x: number, y: number}} position - Position on canvas
+ * @param {{x: number, y: number}} cellSize - Grid's cell size
+ *
+ * @returns {{x: number, y: number}}
+ */
+function alignPositionToGrid(position, cellSize) {
+  let x = parseInt(position.x / cellSize.x) * cellSize.x;
+  let y = parseInt(position.y / cellSize.y) * cellSize.y;
+
+  return { x: x, y: y };
+}
+
+/**
+ * Make the Konva canvas responsive
+ */
+function fitStageIntoParentContainer(container, mapSize, stage) {
+  // now we need to fit stage into parent
+  var containerWidth = container.offsetWidth;
+  // to do this we need to scale the stage
+  var scale = containerWidth / mapSize.width;
+
+  stage.width(mapSize.width * scale);
+  stage.height(mapSize.height * scale);
+  stage.draw();
+}
+
+/**
+ * Update arrow's position
  *
  * @param {*} arrow - Konva arrow object
  * @param {*} stroke - Konva arrow object that is used as a border for the arrow
@@ -667,7 +692,7 @@ function updateArrowPosition(arrow, stroke, start, end) {
 }
 
 /**
- * Returns point positions for arrow
+ * Get point positions for arrow
  *
  * @param {*} from - Konva object
  * @param {*} to - Konva object

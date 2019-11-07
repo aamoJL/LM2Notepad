@@ -1,7 +1,13 @@
+/*
+ * Functions to take screenshots
+ */
+
 const electron = require("electron");
 const fs = require("fs");
 const nativeImage = electron.nativeImage;
 const desktopCapturer = electron.desktopCapturer;
+
+// Screenshot settings -----------------------------------------------------
 
 const screenshotOptions = {
   types: ["window"],
@@ -11,7 +17,10 @@ const screenshotOptions = {
   }
 };
 
-/** Gets thumbnail of the given window and sends it to callback function if the window source was found
+// Functions ---------------------------------------------------------------
+
+/**
+ * Get thumbnail of the given window and send it to callback function if the window source was found
  *
  * @param {string} sourceName -Name of the window the screenshot will be taken
  * @param {function} callback -Function that will be called when the screenshot has been taken
@@ -30,8 +39,9 @@ function getWindowThumbnail(sourceName, callback) {
   });
 }
 
-/** Saves the given image buffer to file
- * File's name will be time value in milliseconds
+/**
+ * Save the given image buffer to a file.
+ * The file's name will be current time's value in milliseconds
  *
  * @param {Buffer} source - PNG Image buffer
  * @param {string} folder - Path to screenshot folder
@@ -47,7 +57,8 @@ function saveScreenshotToFile(source, folder, callback) {
   });
 }
 
-/** Crops given image with the given settings
+/**
+ * Crop given image with the given settings
  *
  * @param {Buffer} source - Image buffer
  * @param {{x: number, y: number, width: number, height: number}} cropOptions - Options for cropping
@@ -59,6 +70,11 @@ function cropImage(source, cropOptions) {
   return img.crop(cropOptions);
 }
 
+/**
+ * Delete given image file
+ *
+ * @param {string} path - Path to the image
+ */
 function removeImage(path) {
   fs.unlinkSync(path, function(err) {
     if (err) throw err;
