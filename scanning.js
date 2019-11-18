@@ -6,10 +6,6 @@ const $ = require("jquery");
 const Tesseract = require("tesseract.js");
 const fs = require("fs");
 
-// Variables --------------------------------------------------------
-
-const jsonPath = "./notes.json"; // Path to notes JSON file
-
 // Functions ---------------------------------------------------------
 
 /**
@@ -38,37 +34,43 @@ function scanImage(source, progressCallback, resultCallback) {
 /**
  * Save scanned text to json file
  *
+ * @param {string} path - Path to notes json file
  * @param {string} text -Scanned text
  * @param {string} screenshotName -Name of the scanned image
  * @param {Function} callback -Callback that will be called when the scan has been saved
  */
-function saveScanToJSONFile(text, screenshotName, callback) {
-  $.getJSON(jsonPath, function(data) {
-    var newId = data.length == 0 ? 0 : data[data.length - 1].id + 1;
-    var newScanObject = {
-      id: newId,
-      text: text,
-      screenshot: screenshotName
-    };
+function saveScanToJSONFile(path, text, screenshotName, callback) {
+  $.getJSON(path)
+    .done(function(data) {
+      var newId = data.length == 0 ? 0 : data[data.length - 1].id + 1;
+      var newScanObject = {
+        id: newId,
+        text: text,
+        screenshot: screenshotName
+      };
 
-    // Save to JSON file
-    data.push(newScanObject);
-    var newJSON = JSON.stringify(data);
-    fs.writeFile(jsonPath, newJSON, function() {
-      callback();
+      // Save to JSON file
+      data.push(newScanObject);
+      var newJSON = JSON.stringify(data);
+      fs.writeFile(path, newJSON, function() {
+        callback();
+      });
+    })
+    .fail(function(jqxhr, textStatus, error) {
+      console.log(error);
     });
-  });
 }
 
 /**
  * Edit and save existing scan's text
  *
+ * @param {string} path - Path to notes json file
  * @param {number} id -Scan's id number
  * @param {string} text -New text for the scan
  * @param {Function} callback -Callback that is called when the save has been completed
  */
-function editScanText(id, newText, callback) {
-  $.getJSON(jsonPath, function(data) {
+function editScanText(path, id, newText, callback) {
+  $.getJSON(path, function(data) {
     // Find text in json with the given id
     $.each(data, function(i, value) {
       if (value.id === id) {
@@ -76,7 +78,7 @@ function editScanText(id, newText, callback) {
         value.text = newText;
         // Save to JSON file
         var newJSON = JSON.stringify(data);
-        fs.writeFile(jsonPath, newJSON, function() {
+        fs.writeFile(path, newJSON, function() {
           callback();
         });
         // break from the loop
@@ -89,11 +91,12 @@ function editScanText(id, newText, callback) {
 /**
  * Remove scanned text from the note text JSON file
  *
+ * @param {string} path - Path to notes json file
  * @param {number} id - Scan text's id that is integer,
  * @param {function} callback - Callback that is called when the text has been removed
  */
-function deleteScanText(id, imageFolder, callback) {
-  $.getJSON(jsonPath, function(data) {
+function deleteScanText(path, id, imageFolder, callback) {
+  $.getJSON(path, function(data) {
     var index = -1;
     $.each(data, function(i, value) {
       if (value.id === id) {
@@ -109,7 +112,7 @@ function deleteScanText(id, imageFolder, callback) {
       // Remove scan from json
       data.splice(index, 1);
       var newJSON = JSON.stringify(data);
-      fs.writeFile(jsonPath, newJSON, function() {
+      fs.writeFile(path, newJSON, function() {
         callback();
       });
     }

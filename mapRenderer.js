@@ -16,11 +16,12 @@ require("bootstrap");
 
 // Map settings ---------------------------------------------------
 
+const resourcePath = process.resourcesPath;
 const containerParent = document.getElementById("stage-parent"); // Container that has the Konva container as a child
-const mapScreenshotFolder = "./screenshots/map/"; // Path to map screenshots
-const mapJSONFolder = "./maps/"; // Path to map JSON files
-const mapMarkersJSONFolder = "./maps/markers/"; // Path to marker JSON files
-const mapMarkerIconFolder = "./icons/"; // Path to icons
+const mapScreenshotFolder = path.join(resourcePath, "/screenshots/map/"); // Path to map screenshots
+const mapJSONFolder = path.join(resourcePath, "/maps/"); // Path to map JSON files
+const mapMarkersJSONFolder = path.join(resourcePath, "/maps/markers/"); // Path to marker JSON files
+const mapMarkerIconFolder = path.join(__dirname, "/icons/"); // Path to icons
 const mapCropOptions = {
   // Settings for cropping the map screenshot
   x: 65,
@@ -53,6 +54,23 @@ let dragItemURL = ""; // Path to image that is being dragged
 // Window events ------------------------------------------------------
 
 window.addEventListener("load", () => {
+  // Check and add folders if they does not exist.
+  if (!fs.existsSync(path.join(resourcePath, "/screenshots/"))) {
+    fs.mkdirSync(path.join(resourcePath, "/screenshots"));
+    console.log("created");
+  }
+  if (!fs.existsSync(path.join(resourcePath, "/screenshots/map/"))) {
+    fs.mkdirSync(path.join(resourcePath, "/screenshots/map"));
+    console.log("created");
+  }
+  if (!fs.existsSync(path.join(resourcePath, "/maps/"))) {
+    fs.mkdirSync(path.join(resourcePath, "/maps"));
+    console.log("created");
+  }
+  if (!fs.existsSync(path.join(resourcePath, "/maps/markers/"))) {
+    fs.mkdirSync(path.join(resourcePath, "/maps/markers"));
+    console.log("created");
+  }
   // Add shortcuts
   globalShortcut.register("CommandOrControl+shift+M", () => {
     takeAndSaveScreenshot();
@@ -402,7 +420,7 @@ function refreshScreenshotList() {
       let imgName = path.parse(value).name;
       screenshotList.prepend(`
       <img
-        src="./screenshots/map/${value}"
+        src="${mapScreenshotFolder + value}"
         id="${imgName}"
         class="img-thumbnail mb-3"
         draggable="true"

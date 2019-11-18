@@ -20,8 +20,7 @@
   },
   "devDependencies": {
     "electron-builder": "^20.39.0",
-    "electron": "^4.1.0",
-    "electron-rebuild": "^1.8.4"
+    "electron": "^4.1.0"
   },
   "description": "",
   "build": {
@@ -29,11 +28,9 @@
     "directories": {
       "output": "build"
     },
+    "icon": "icon.png",
     "target": "portable",
-    "productName": "Map App",
-    "extraFiles": [
-      "screenshots",
-      "text.json"
-    ]
+    "productName": "LM2 Notepad",
+    "copyright": "Copyright © 2019 Joni Laukka"
   }
 }

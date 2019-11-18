@@ -10,12 +10,14 @@ const { globalShortcut } = remote;
 const screenCapture = require("./screenCapture.js");
 const scanning = require("./scanning.js");
 const path = require("path");
+const fs = require("fs");
 require("bootstrap");
 
 // Screenshot settings ------------------------------------
 
-const noteScreenshotFolder = "./screenshots/notes/";
-const noteTextPath = "./notes.json";
+const resourcePath = process.resourcesPath;
+const noteScreenshotFolder = path.join(resourcePath, "/screenshots/notes/");
+const noteTextPath = path.join(resourcePath, "/notes.json");
 const mapCropOptions = {
   x: 65,
   y: 70,
@@ -56,6 +58,19 @@ window.addEventListener("beforeunload", () => {
 });
 
 $(window).on("load", () => {
+  // Check paths, create folders if the folders does not exist
+  if (!fs.existsSync(path.join(resourcePath, "/screenshots/"))) {
+    fs.mkdirSync(path.join(resourcePath, "/screenshots"));
+    console.log("created");
+  }
+  if (!fs.existsSync(path.join(resourcePath, "/screenshots/notes/"))) {
+    fs.mkdirSync(path.join(resourcePath, "/screenshots/notes"));
+    console.log("created");
+  }
+  if (!fs.existsSync(path.join(resourcePath, "/notes.json"))) {
+    fs.writeFileSync(noteTextPath, "[]");
+    console.log("created");
+  }
   // Load content
   refreshWindowsList();
   // Activate tooltips
@@ -97,11 +112,16 @@ function takeAndSaveScreenshot() {
       screenshot,
       noteScreenshotFolder,
       function(imagePath) {
-        scanning.saveScanToJSONFile("", path.parse(imagePath).name, () => {
-          refreshNoteList(() => {
-            $('[data-toggle="tooltip"]').tooltip();
-          });
-        });
+        scanning.saveScanToJSONFile(
+          noteTextPath,
+          "",
+          path.parse(imagePath).name,
+          () => {
+            refreshNoteList(() => {
+              $('[data-toggle="tooltip"]').tooltip();
+            });
+          }
+        );
       }
     );
   });
@@ -138,6 +158,7 @@ function scanAndSaveScreenshot() {
           noteScreenshotFolder,
           function(imgPath) {
             scanning.saveScanToJSONFile(
+              noteTextPath,
               result.text,
               path.parse(imgPath).name,
               () => {
@@ -159,7 +180,7 @@ function scanAndSaveScreenshot() {
 function saveNote() {
   var scanText = $("#scan-text");
   if (scanText.val() !== "") {
-    scanning.saveScanToJSONFile(scanText.val(), "", () => {
+    scanning.saveScanToJSONFile(noteTextPath, scanText.val(), "", () => {
       refreshNoteList(() => {
         $('[data-toggle="tooltip"]').tooltip();
       });
@@ -204,57 +225,65 @@ function refreshNoteList(callback) {
   // clear the card container
   container.empty();
 
-  $.getJSON(noteTextPath, function(data) {
-    // Change data's order so the most recent text is on top
-    data = data.reverse();
-    // Append the container with cards
-    $.each(data, function(index, value) {
-      container.append(JSONtoNoteCardElement(value));
-      // Add button click events to card buttons
-      $(`#remove-card-button-${value.id}`).on("click", function() {
-        scanning.deleteScanText(value.id, noteScreenshotFolder, () => {
-          refreshNoteList(() => {
-            $('[data-toggle="tooltip"]').tooltip();
-          });
+  if (fs.existsSync(noteTextPath)) {
+    $.getJSON(noteTextPath, function(data) {
+      // Change data's order so the most recent text is on top
+      data = data.reverse();
+      // Append the container with cards
+      $.each(data, function(index, value) {
+        container.append(JSONtoNoteCardElement(value));
+        // Add button click events to card buttons
+        $(`#remove-card-button-${value.id}`).on("click", function() {
+          scanning.deleteScanText(
+            noteTextPath,
+            value.id,
+            noteScreenshotFolder,
+            () => {
+              refreshNoteList(() => {
+                $('[data-toggle="tooltip"]').tooltip();
+              });
+            }
+          );
+        });
+        $(`#edit-button-${value.id}`).on("click", function() {
+          $(`#edit-button-${value.id}`).toggleClass("d-none");
+          $(`#cancel-button-${value.id}`).toggleClass("d-none");
+          $(`#save-button-${value.id}`).toggleClass("d-none");
+          $(`#card-text-${value.id}`).toggleClass("d-none");
+          $(`#card-textarea-${value.id}`).toggleClass("d-none");
+        });
+        $(`#save-button-${value.id}`).on("click", function() {
+          $(`#edit-button-${value.id}`).toggleClass("d-none");
+          $(`#cancel-button-${value.id}`).toggleClass("d-none");
+          $(`#save-button-${value.id}`).toggleClass("d-none");
+          $(`#card-text-${value.id}`).toggleClass("d-none");
+          $(`#card-textarea-${value.id}`).toggleClass("d-none");
+          scanning.editScanText(
+            noteTextPath,
+            value.id,
+            $(`#card-textarea-${value.id}`).val(),
+            function() {
+              // Update scan card list when the edit has been saved
+              refreshNoteList(() => {
+                $('[data-toggle="tooltip"]').tooltip();
+              });
+            }
+          );
+        });
+        $(`#cancel-button-${value.id}`).on("click", function() {
+          $(`#edit-button-${value.id}`).toggleClass("d-none");
+          $(`#cancel-button-${value.id}`).toggleClass("d-none");
+          $(`#save-button-${value.id}`).toggleClass("d-none");
+          $(`#card-text-${value.id}`).toggleClass("d-none");
+          $(`#card-textarea-${value.id}`).toggleClass("d-none");
         });
       });
-      $(`#edit-button-${value.id}`).on("click", function() {
-        $(`#edit-button-${value.id}`).toggleClass("d-none");
-        $(`#cancel-button-${value.id}`).toggleClass("d-none");
-        $(`#save-button-${value.id}`).toggleClass("d-none");
-        $(`#card-text-${value.id}`).toggleClass("d-none");
-        $(`#card-textarea-${value.id}`).toggleClass("d-none");
-      });
-      $(`#save-button-${value.id}`).on("click", function() {
-        $(`#edit-button-${value.id}`).toggleClass("d-none");
-        $(`#cancel-button-${value.id}`).toggleClass("d-none");
-        $(`#save-button-${value.id}`).toggleClass("d-none");
-        $(`#card-text-${value.id}`).toggleClass("d-none");
-        $(`#card-textarea-${value.id}`).toggleClass("d-none");
-        scanning.editScanText(
-          value.id,
-          $(`#card-textarea-${value.id}`).val(),
-          function() {
-            // Update scan card list when the edit has been saved
-            refreshNoteList(() => {
-              $('[data-toggle="tooltip"]').tooltip();
-            });
-          }
-        );
-      });
-      $(`#cancel-button-${value.id}`).on("click", function() {
-        $(`#edit-button-${value.id}`).toggleClass("d-none");
-        $(`#cancel-button-${value.id}`).toggleClass("d-none");
-        $(`#save-button-${value.id}`).toggleClass("d-none");
-        $(`#card-text-${value.id}`).toggleClass("d-none");
-        $(`#card-textarea-${value.id}`).toggleClass("d-none");
-      });
+
+      if (callback && callback());
+
+      container.scrollTop(currentScrollPosition);
     });
-
-    if (callback && callback());
-
-    container.scrollTop(currentScrollPosition);
-  });
+  }
 }
 
 /**
@@ -289,16 +318,19 @@ function JSONtoNoteCardElement(cardInfo) {
         <div class="d-flex">
           <div class="flex-grow-1">
             <button class="btn btn-primary btn-sm" id="edit-button-${
+              // Edit
               cardInfo.id
             }" data-toggle="tooltip" title="Edit">
               <img src="icons/edit.svg" alt="edit note" />
             </button>
             <button class="btn btn-warning btn-sm d-none" id="cancel-button-${
+              // Cancel
               cardInfo.id
             }" data-toggle="tooltip" title="Cancel">
               <img src="icons/cancel.svg" alt="cancel note changes" />
             </button>
             <button class="btn btn-success btn-sm d-none" id="save-button-${
+              // Save
               cardInfo.id
             }" data-toggle="tooltip" title="Save">
             <img src="icons/save.svg" alt="save note changes" />
@@ -306,6 +338,7 @@ function JSONtoNoteCardElement(cardInfo) {
           </div>
           <div class="align-self-end">
             <button class="btn btn-danger btn-sm" id="remove-card-button-${
+              // Delete
               cardInfo.id
             }" data-toggle="tooltip" title="Delete">
             <img src="icons/delete.svg" alt="delete note" />
