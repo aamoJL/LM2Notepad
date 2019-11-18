@@ -530,7 +530,7 @@ function deleteMap(mapName) {
  */
 function addNewMap(mapName) {
   if (mapName === "") {
-    alert("Map name can't be empty");
+    return alert("Map name can't be empty");
   }
   try {
     if (fs.existsSync(mapJSONFolder + mapName + ".json")) {
