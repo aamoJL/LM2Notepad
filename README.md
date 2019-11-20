@@ -11,7 +11,7 @@ Take screenshots, write notes and create maps while playing the game.
 
 #|Meaning|Action
 -|-|-
-1 | Scanner | Take and scan a screenshot and add it to notes
+1 | Scanner | Take and scan text from a screenshot and add it to notes
 2 | Add a note | Add a new note
 3 | Add a screenshot | Take and add a screenshot to notes, cropping removes borders from the screenshot
 4 | Note list | View, edit and delete notes
