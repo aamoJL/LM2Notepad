@@ -3,6 +3,12 @@ Notepad application for La-Mulana 2.
 
 Take screenshots, write notes and create maps while playing the game.
 
+Made with:
+- [Electron](https://electronjs.org/) : Framework
+- [Konva](https://konvajs.org/) : Map canvas
+- [Tesseract.js](https://github.com/naptha/tesseract.js) : Text scanning
+- [Bootstrap](https://getbootstrap.com/) : Visual styling
+
 ## Note tool
 
 :warning: La Mulana 2 window needs to be visible and selected from the captured window list before you can take screenshots.
