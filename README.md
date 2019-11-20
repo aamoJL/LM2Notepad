@@ -31,6 +31,6 @@ Made with:
 #|Meaning|Action
 -|-|-
 1 | Screenshot list | Drag and drop images to map grid, right click to delete a screenshot
-2 | Map tools | Drag and drop icons to map
+2 | Map tools | Drag and drop icons and text to map
 3 | Map list | Add and select maps, right click to delete a map
 4 | Map | Right click to delete elements. Zoom and move the map with mouse wheel
