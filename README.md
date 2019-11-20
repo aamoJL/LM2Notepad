@@ -5,6 +5,8 @@ Take screenshots, write notes and create maps while playing the game.
 
 ## Note tool
 
+:warning: La Mulana 2 window needs to be visible and selected from the captured window list before you can take screenshots.
+
 ![Image of map](documents/readme_notes.png)
 
 #|Meaning|Action
@@ -16,11 +18,13 @@ Take screenshots, write notes and create maps while playing the game.
 
 ## Mapping tool
 
+:warning: La Mulana 2 window needs to be visible and selected from the captured window list before you can take screenshots.
+
 ![Image of map](documents/readme_map.png)
 
 #|Meaning|Action
 -|-|-
-1 | Screenshot list | Drag and drop images to map grid
+1 | Screenshot list | Drag and drop images to map grid, right click to delete a screenshot
 2 | Map tools | Drag and drop icons to map
 3 | Map list | Add and select maps, right click to delete a map
-4 | Map | Right click to delete elements. Zoom and move with mouse wheel
+4 | Map | Right click to delete elements. Zoom and move the map with mouse wheel
