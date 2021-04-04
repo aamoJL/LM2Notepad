@@ -3,7 +3,7 @@ Notepad application for La-Mulana 2.
 
 Take screenshots, write notes and create maps while playing the game.
 
-### [Web demo](https://aamojl.github.io/LM2Notepad/demo/map.html)
+### [Mapping tool Web demo](https://aamojl.github.io/LM2Notepad/demo/map.html)
 
 Made with:
 - [Electron](https://electronjs.org/) : Framework
