@@ -1,0 +1,55 @@
+body {
+  overflow-y: hidden;
+}
+
+.json-text-container {
+  height: 600px;
+  overflow-y: auto;
+}
+
+.screenshot-list-container {
+  height: 600px;
+  overflow-y: auto;
+}
+
+#stage-parent {
+  width: 100%;
+  overflow: hidden;
+}
+
+.map-tools {
+  height: 50px;
+}
+
+.width-50 {
+  width: 50px;
+}
+
+.map-text-container .map-icon {
+  margin-right: 0px;
+}
+
+.remove-bottom-radius {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.remove-top-radius {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.remove-left-radius {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.remove-right-radius {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.img-center {
+  display: flex;
+  height: 1.2em;
+}
