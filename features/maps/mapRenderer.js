@@ -2,16 +2,14 @@
  * Renderer script for map window
  */
 
-const electron = require("electron");
-const screenCapture = require("./screenCapture.js");
-const desktopCapturer = electron.desktopCapturer;
+const { desktopCapturer, globalShortcut } = require("electron");
+const screenCapture = require("../screenCapture/screenCapture.js");
 const mapDrawing = require("./mapDrawing.js");
-const { remote } = require("electron");
-const { globalShortcut } = remote;
-const Konva = require("konva");
+const Konva = require("konva").default;
 const path = require("path");
 const $ = require("jquery");
 const fs = require("fs");
+const { Console } = require("console");
 require("bootstrap");
 
 // Map settings ---------------------------------------------------
@@ -27,7 +25,7 @@ const mapCropOptions = {
   x: 65,
   y: 70,
   width: 790,
-  height: 425
+  height: 425,
 };
 const mapWidth = 704;
 const mapHeight = 704;
@@ -43,7 +41,7 @@ const stage = new Konva.Stage({
   scaleY: 0.12,
   width: mapWidth,
   height: mapHeight,
-  draggable: false
+  draggable: false,
 });
 let gridLayer = new Konva.Layer();
 let mapLayer = new Konva.Layer();
@@ -83,7 +81,7 @@ window.addEventListener("load", () => {
     containerParent,
     {
       width: mapWidth,
-      height: mapHeight
+      height: mapHeight,
     },
     stage
   );
@@ -91,12 +89,10 @@ window.addEventListener("load", () => {
 
 window.addEventListener("beforeunload", () => {
   // Unregister shortcuts
-  globalShortcut.unregister("CommandOrControl+shift+M", () =>
-    takeAndScanThumbnail()
-  );
+  globalShortcut.unregister("CommandOrControl+shift+M");
 });
 
-$(document).ready(function() {
+$(function () {
   // Activate tooltips
   $('[data-toggle="tooltip"]').tooltip();
 
@@ -118,7 +114,7 @@ $(window).on("resize", () => {
     containerParent,
     {
       width: mapWidth,
-      height: mapHeight
+      height: mapHeight,
     },
     stage
   );
@@ -126,44 +122,53 @@ $(window).on("resize", () => {
 
 // Button events -------------------------------------------------------
 
-$("#refresh-windows-list-button").on("click", function() {
+$("#refresh-windows-list-button").on("click", function () {
   refreshWindowsList();
 });
-$("#screenshot-button").on("click", function() {
+$("#screenshot-button").on("click", function () {
   takeAndSaveScreenshot();
 });
-$("#new-map-button").on("click", function(e) {
+$("#new-map-button").on("click", function (e) {
   e.preventDefault();
   let newMapNameInput = $("#new-map-name-input");
-  addNewMap(newMapNameInput.val());
+  let newMapName = newMapNameInput.val();
+
+  if (newMapName !== undefined) {
+    addNewMap(newMapName.toString());
+  }
+
   newMapNameInput.val(""); // Clear name input
 });
 
 // Konva stage events --------------------------------------------------
 
-stage.on("wheel", e => {
+stage.on("wheel", (e) => {
   e.evt.preventDefault();
+
+  let pointerPosition = stage.getPointerPosition();
+
+  if (pointerPosition == null) return;
+
   // Map zooming
-  var oldScale = stage.scaleX();
+  let oldScale = stage.scaleX();
 
   var mousePointTo = {
-    x: stage.getPointerPosition().x / oldScale - stage.x() / oldScale,
-    y: stage.getPointerPosition().y / oldScale - stage.y() / oldScale
+    x: pointerPosition.x / oldScale - stage.x() / oldScale,
+    y: pointerPosition.y / oldScale - stage.y() / oldScale,
   };
 
-  var newScale =
-    e.evt.deltaY < 0 ? oldScale * mapZoomDelta : oldScale / mapZoomDelta;
+  var newScale = e.evt.deltaY < 0 ? oldScale * mapZoomDelta : oldScale / mapZoomDelta;
   stage.scale({ x: newScale, y: newScale });
 
   var newPos = {
-    x: -(mousePointTo.x - stage.getPointerPosition().x / newScale) * newScale,
-    y: -(mousePointTo.y - stage.getPointerPosition().y / newScale) * newScale
+    x: -(mousePointTo.x - pointerPosition.x / newScale) * newScale,
+    y: -(mousePointTo.y - pointerPosition.y / newScale) * newScale,
   };
   stage.position(newPos);
   stage.batchDraw();
 });
 
-stage.on("mousedown", e => {
+stage.on("mousedown", (e) => {
   // Map dragging
   if (e.evt.button === 1) {
     stage.draggable(true);
@@ -178,39 +183,52 @@ stage.on("mousedown", e => {
  * Add drag and drop events to screenshot images and map tools
  */
 function addDragEvents() {
-  Array.from(
-    document
-      .getElementById("map-tools-container")
-      .getElementsByClassName("map-icon")
-  ).forEach(element => {
-    element.addEventListener("dragstart", function(e) {
-      dragItemType = "icon";
-      dragItemURL = e.target.src;
-    });
-  });
+  let mapToolsContainer = $("#map-tools-container");
+  let mapText = $("#map-text");
+  let mapArrow = $("#map-arrow");
+  let mapScreenshotList = $("#map-screenshot-list");
 
-  // Drag and drop for text
-  document
-    .getElementById("map-text")
-    .addEventListener("dragstart", function(e) {
+  // Map icons
+  if (mapToolsContainer) {
+    Array.from($(mapToolsContainer).find(".map-icon")).forEach((element) => {
+      $(element).on("dragstart", function (e) {
+        dragItemType = "icon";
+        dragItemURL = e.target.getAttribute("src")?.toString() ?? "";
+      });
+    });
+  } else {
+    console.error("Map tools container was not found");
+  }
+
+  // Text
+  if (mapText) {
+    $(mapText).on("dragstart", function (e) {
       dragItemType = "text";
       dragItemURL = "";
     });
+  } else {
+    console.error("Map text was not found");
+  }
 
-  document
-    .getElementById("map-arrow")
-    .addEventListener("dragstart", function(e) {
+  // Arrow
+  if (mapArrow) {
+    $(mapArrow).on("dragstart", function (e) {
       dragItemType = "arrow";
       dragItemURL = "";
     });
+  } else {
+    console.error("Map arrow was not found");
+  }
 
   // Add image drag and drop to screenshot list
-  document
-    .getElementById("map-screenshot-list")
-    .addEventListener("dragstart", function(e) {
+  if (mapScreenshotList) {
+    $(mapScreenshotList).on("dragstart", function (e) {
       dragItemType = "image";
-      dragItemURL = e.target.src;
+      dragItemURL = e.target.getAttribute("src")?.toString() ?? "";
     });
+  } else {
+    console.error("Map screenshot list was not found");
+  }
 }
 
 /**
@@ -219,55 +237,36 @@ function addDragEvents() {
 function addDropEvents() {
   let stageContainer = stage.container(); // Konva canvas container
 
-  stageContainer.addEventListener("dragover", function(e) {
+  stageContainer.addEventListener("dragover", function (e) {
     e.preventDefault();
   });
-  stageContainer.addEventListener("drop", function(e) {
+  stageContainer.addEventListener("drop", function (e) {
     e.preventDefault();
     stage.setPointersPositions(e);
     if (dragItemType === "image") {
-      let position = mapDrawing.alignPositionToGrid(
-        mapDrawing.getRelativePointerPosition(mapLayer),
-        cellSize
-      );
-      mapDrawing.addMapImageToLayer(
-        dragItemURL,
-        { x: position.x, y: position.y },
-        cellSize,
-        mapLayer,
-        image => {
-          mapDrawing.addEventsToMapImage(
-            image,
-            mapLayer,
-            cellSize,
-            stage,
-            () => {
-              saveMap(selectedMap);
-            }
-          );
+      let position = mapDrawing.alignPositionToGrid(mapDrawing.getRelativePointerPosition(mapLayer), cellSize);
+      mapDrawing.addMapImageToLayer(dragItemURL, { x: position.x, y: position.y }, cellSize, mapLayer, (image) => {
+        mapDrawing.addEventsToMapImage(image, mapLayer, cellSize, stage, () => {
           saveMap(selectedMap);
-        }
-      );
+        });
+        saveMap(selectedMap);
+      });
     } else if (dragItemType === "icon") {
       let position = mapDrawing.getRelativePointerPosition(markerLayer);
-      mapDrawing.addMarkerToLayer(
-        dragItemURL,
-        { x: position.x - 35, y: position.y - 35 },
-        markerLayer,
-        image => {
-          mapDrawing.addEventsToMapMarker(image, markerLayer, stage, () => {
-            saveMapMarkers(selectedMap);
-          });
+      mapDrawing.addMarkerToLayer(dragItemURL, { x: position.x - 35, y: position.y - 35 }, markerLayer, (image) => {
+        mapDrawing.addEventsToMapMarker(image, markerLayer, stage, () => {
           saveMapMarkers(selectedMap);
-        }
-      );
+        });
+        saveMapMarkers(selectedMap);
+      });
     } else if (dragItemType === "text") {
       let position = mapDrawing.getRelativePointerPosition(markerLayer);
       // add text to layer
       var textInput = $("#map-text-input");
       var text = textInput.val();
-      if (text !== "" && text !== null) {
-        mapDrawing.addTextToLayer(text, position, markerLayer, textNode => {
+
+      if (text) {
+        mapDrawing.addTextToLayer(text.toString(), position, markerLayer, (textNode) => {
           // Events
           mapDrawing.addEventsToMapText(textNode, markerLayer, stage, () => {
             saveMapMarkers(selectedMap);
@@ -275,24 +274,21 @@ function addDropEvents() {
           saveMapMarkers(selectedMap);
         });
       }
+
       textInput.val("");
     } else if (dragItemType === "arrow") {
       let position = mapDrawing.getRelativePointerPosition(markerLayer);
       //add arrow to layer
       let endPointOffset = 200;
-      let points = [
-        position.x - endPointOffset,
-        position.y,
-        position.x + endPointOffset,
-        position.y
-      ];
-      mapDrawing.addArrowToLayer(points, markerLayer, objects => {
+      let points = [position.x - endPointOffset, position.y, position.x + endPointOffset, position.y];
+      mapDrawing.addArrowToLayer(points, markerLayer, (objects) => {
         mapDrawing.addEventsToMapArrow(objects, markerLayer, stage, () => {
           saveMapMarkers(selectedMap);
         });
         saveMapMarkers(selectedMap);
       });
     }
+
     dragItemType = "";
   });
 }
@@ -315,7 +311,7 @@ function loadMap(mapName) {
     stage,
     {
       mapImageFolderPath: mapScreenshotFolder,
-      cellSize: cellSize
+      cellSize: cellSize,
     },
     () => {
       saveMap(mapName);
@@ -340,14 +336,9 @@ function loadMapMarkers(mapName) {
     return alert("No map selected");
   }
   let markersPath = mapMarkersJSONFolder + mapName + "-markers.json";
-  let newMarkerLayer = mapDrawing.loadMapMarkerLayerFromJSON(
-    markersPath,
-    stage,
-    mapMarkerIconFolder,
-    () => {
-      saveMapMarkers(mapName);
-    }
-  );
+  let newMarkerLayer = mapDrawing.loadMapMarkerLayerFromJSON(markersPath, stage, mapMarkerIconFolder, () => {
+    saveMapMarkers(mapName);
+  });
   // Change the old layer to new one
   markerLayer.destroy();
   markerLayer = newMarkerLayer;
@@ -389,23 +380,19 @@ function saveMapMarkers(mapName) {
  * Get all available window names and adds them to dropdown list
  */
 function refreshWindowsList() {
-  desktopCapturer.getSources({ types: ["window"] }, (error, sources) => {
-    if (error) {
-      return console.log(error.message);
-    }
+  desktopCapturer
+    .getSources({ types: ["window"] })
+    .then((sources) => {
+      let windowList = $("#screenshot-window-list");
+      windowList.empty();
 
-    let windowList = $("#screenshot-window-list");
-    windowList.empty();
-
-    sources.forEach(source => {
-      windowList.append(
-        $("<option></option>")
-          .attr("value", source.name)
-          .text(source.name)
-      );
-      //console.log(source.name);
+      sources.forEach((source) => {
+        windowList.append($("<option></option>").attr("value", source.name).text(source.name));
+      });
+    })
+    .catch((error) => {
+      console.log(error.message);
     });
-  });
 }
 
 /**
@@ -416,7 +403,7 @@ function refreshScreenshotList() {
   screenshotList.empty();
   // Get files in directory
   fs.readdir(mapScreenshotFolder, (err, dir) => {
-    $.each(dir, function(index, value) {
+    $.each(dir, function (index, value) {
       let imgName = path.parse(value).name;
       screenshotList.prepend(`
       <img
@@ -426,7 +413,7 @@ function refreshScreenshotList() {
         draggable="true"
       />`);
       // Add event to remove the image with right mouse click
-      $(`#${imgName}`).on("mousedown", e => {
+      $(`#${imgName}`).on("mousedown", (e) => {
         if (e.button === 2) {
           screenshotRemoveConfirmation(mapScreenshotFolder + value);
         }
@@ -443,7 +430,7 @@ function refreshMapLinkList() {
   mapLinkList.empty();
   // Get files in directory
   fs.readdir(mapJSONFolder, (err, dir) => {
-    $.each(dir, function(index, value) {
+    $.each(dir, function (index, value) {
       // Only json files are valid maps
       if (path.parse(value).ext !== ".json") {
         return;
@@ -461,10 +448,10 @@ function refreshMapLinkList() {
         ${mapName}
       </button>
       `);
-      $(`#${mapNameNoSpaces}-button`).on("click", function(e) {
+      $(`#${mapNameNoSpaces}-button`).on("click", function (e) {
         selectMap(mapName);
       });
-      $(`#${mapNameNoSpaces}-button`).on("contextmenu", function(e) {
+      $(`#${mapNameNoSpaces}-button`).on("contextmenu", function (e) {
         deleteMap(mapName);
       });
       if (selectedMap === "" || selectedMap === mapName) {
@@ -513,9 +500,7 @@ function deleteMap(mapName) {
     if (fs.existsSync(mapJSONFolder + mapNameNoSpaces + ".json")) {
       fs.unlinkSync(mapJSONFolder + mapNameNoSpaces + ".json");
     }
-    if (
-      fs.existsSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json")
-    ) {
+    if (fs.existsSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json")) {
       fs.unlinkSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json");
     }
 
@@ -565,15 +550,13 @@ function screenshotRemoveConfirmation(path) {
  */
 function takeAndSaveScreenshot() {
   // Get thumbnail image
-  let windowList = $("#screenshot-window-list");
-  screenCapture.getWindowThumbnail(windowList.val(), function(screenshot) {
-    screenshot = screenCapture.cropImage(screenshot, mapCropOptions).toPNG();
-    screenCapture.saveScreenshotToFile(
-      screenshot,
-      mapScreenshotFolder,
-      function(path) {
+  let selectedWindow = $("#screenshot-window-list").val();
+  if (selectedWindow) {
+    screenCapture.getWindowThumbnail(selectedWindow.toString(), function (thumbnail) {
+      let screenshot = screenCapture.cropImage(thumbnail, mapCropOptions).toPNG();
+      screenCapture.saveScreenshotToFile(screenshot, mapScreenshotFolder, function (path) {
         refreshScreenshotList();
-      }
-    );
-  });
+      });
+    });
+  }
 }

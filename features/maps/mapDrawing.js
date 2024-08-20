@@ -2,7 +2,7 @@
  * Functions to draw images, texts etc. to Konva canvas.
  */
 
-const Konva = require("konva");
+const Konva = require("konva").default;
 const path = require("path");
 const fs = require("fs");
 
@@ -22,7 +22,7 @@ function drawGrid(rows, cols, cellSize, layer) {
       startX: 0,
       startY: i * cellSize.y,
       endX: rows * cellSize.x,
-      endY: i * cellSize.y
+      endY: i * cellSize.y,
     };
     addLineToLayer(positions, layer);
   }
@@ -31,7 +31,7 @@ function drawGrid(rows, cols, cellSize, layer) {
       startX: i * cellSize.x,
       startY: 0,
       endX: i * cellSize.x,
-      endY: cols * cellSize.y
+      endY: cols * cellSize.y,
     };
     addLineToLayer(positions, layer);
   }
@@ -53,7 +53,7 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
   let newImg = new Image();
   newImg.src = imagePath;
 
-  newImg.onload = function() {
+  newImg.onload = function () {
     var image = new Konva.Image({
       image: newImg,
       x: position.x,
@@ -61,7 +61,7 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
       width: cellSize.x,
       height: cellSize.y,
       draggable: false,
-      imageId: imageId
+      imageId: imageId,
     });
 
     layer.add(image);
@@ -86,7 +86,7 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
   let newImg = new Image();
   newImg.src = imagePath;
 
-  newImg.onload = function() {
+  newImg.onload = function () {
     var image = new Konva.Image({
       image: newImg,
       x: position.x,
@@ -95,7 +95,7 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
       height: 70,
       draggable: false,
       imageId: imageId,
-      opacity: 0.8
+      opacity: 0.8,
     });
 
     layer.add(image);
@@ -131,13 +131,13 @@ function addTextToLayer(text, position, layer, callback) {
     fill: "white",
     stroke: "black",
     strokeWidth: 3,
-    fontStyle: "bold"
+    fontStyle: "bold",
   });
 
   layer.add(textNode);
   layer.batchDraw();
 
-  if (callback && callback(textNode));
+  callback && callback(textNode);
 }
 
 /**
@@ -148,16 +148,11 @@ function addTextToLayer(text, position, layer, callback) {
  */
 function addLineToLayer(positions, layer) {
   var line = new Konva.Line({
-    points: [
-      positions.startX,
-      positions.startY,
-      positions.endX,
-      positions.endY
-    ],
+    points: [positions.startX, positions.startY, positions.endX, positions.endY],
     stroke: "black",
     strokeWidth: 4,
     lineCap: "round",
-    lineJoin: "round"
+    lineJoin: "round",
   });
 
   layer.add(line);
@@ -180,7 +175,7 @@ function addArrowToLayer(points, layer, callback) {
     pointerAtBeginning: true,
     pointerLength: 40,
     pointerWidth: 40,
-    draggable: false
+    draggable: false,
   });
 
   // Arrow's border
@@ -193,7 +188,7 @@ function addArrowToLayer(points, layer, callback) {
     pointerAtBeginning: true,
     pointerLength: 40,
     pointerWidth: 40,
-    draggable: false
+    draggable: false,
   });
 
   const startCircle = new Konva.Circle({
@@ -204,7 +199,7 @@ function addArrowToLayer(points, layer, callback) {
     fill: "white",
     stroke: "black",
     strokeWidth: 4,
-    draggable: false
+    draggable: false,
   });
 
   const endCircle = new Konva.Circle({
@@ -215,7 +210,7 @@ function addArrowToLayer(points, layer, callback) {
     opacity: 0.1,
     stroke: "black",
     strokeWidth: 4,
-    draggable: false
+    draggable: false,
   });
 
   layer.add(arrow);
@@ -234,11 +229,11 @@ function addArrowToLayer(points, layer, callback) {
   layer.batchDraw();
 
   if (callback) {
-    objects = {
+    var objects = {
       arrow: arrow,
       arrowStroke: arrowStroke,
       startCircle: startCircle,
-      endCircle: endCircle
+      endCircle: endCircle,
     };
 
     callback(objects);
@@ -250,33 +245,31 @@ function addArrowToLayer(points, layer, callback) {
 /**
  * Add events to map image
  *
- * @param {Image} image -The image the events will be added to
+ * @param {Konva.Image} image -The image the events will be added to
  * @param {*} layer -Konva layer the image is in
  * @param {{x: number, y:number}} cellSize -Map grid size
  * @param {*} stage -Konva stage the layer is in
  * @param {Function} onChange -Callback for image deletion
  */
 function addEventsToMapImage(image, layer, cellSize, stage, onChange) {
-  image.on("dragend", function() {
-    let mousePos = alignPositionToGrid(
-      getRelativePointerPosition(layer),
-      cellSize
-    );
+  image.on("dragend", function () {
+    let mousePos = alignPositionToGrid(getRelativePointerPosition(layer), cellSize);
 
     image.position({
       x: mousePos.x,
-      y: mousePos.y
+      y: mousePos.y,
     });
     layer.batchDraw();
-    if (onChange && onChange());
+
+    onChange && onChange();
   });
-  image.on("dragstart", e => {
+  image.on("dragstart", (e) => {
     // 4: middle mouse button
     if (e.evt.buttons === 4) {
       image.stopDrag();
     }
   });
-  image.on("mousedown", e => {
+  image.on("mousedown", (e) => {
     // 0: left mouse button
     if (e.evt.button === 0) {
       image.draggable(true);
@@ -290,14 +283,14 @@ function addEventsToMapImage(image, layer, cellSize, stage, onChange) {
         image.destroy();
         layer.draw();
 
-        if (onChange && onChange());
+        onChange && onChange();
       }
     }
   });
-  image.on("mouseenter", function() {
+  image.on("mouseenter", function () {
     stage.container().style.cursor = "move";
   });
-  image.on("mouseleave", function() {
+  image.on("mouseleave", function () {
     stage.container().style.cursor = "default";
   });
 }
@@ -305,23 +298,24 @@ function addEventsToMapImage(image, layer, cellSize, stage, onChange) {
 /**
  * Add events to map marker
  *
- * @param {Image} image -The image the events will be added to
+ * @param {Konva.Image} image -The image the events will be added to
  * @param {*} layer -Konva layer the image is in
  * @param {*} stage -Konva stage the layer is in
  * @param {Function} onChange -Callback for image deletion
  */
 function addEventsToMapMarker(image, layer, stage, onChange) {
-  image.on("dragend", function() {
+  image.on("dragend", function () {
     layer.batchDraw();
-    if (onChange && onChange());
+
+    onChange && onChange();
   });
-  image.on("dragstart", e => {
+  image.on("dragstart", (e) => {
     // 4: middle mouse button
     if (e.evt.buttons === 4) {
       image.stopDrag();
     }
   });
-  image.on("mousedown", e => {
+  image.on("mousedown", (e) => {
     // 0: left mouse button
     if (e.evt.button === 0) {
       image.draggable(true);
@@ -335,14 +329,14 @@ function addEventsToMapMarker(image, layer, stage, onChange) {
         image.destroy();
         layer.draw();
 
-        if (onChange && onChange());
+        onChange && onChange();
       }
     }
   });
-  image.on("mouseenter", function() {
+  image.on("mouseenter", function () {
     stage.container().style.cursor = "move";
   });
-  image.on("mouseleave", function() {
+  image.on("mouseleave", function () {
     stage.container().style.cursor = "default";
   });
 }
@@ -356,17 +350,18 @@ function addEventsToMapMarker(image, layer, stage, onChange) {
  * @param {Function} onChange -Callback for image deletion
  */
 function addEventsToMapText(textNode, layer, stage, onChange) {
-  textNode.on("dragend", function() {
+  textNode.on("dragend", function () {
     layer.batchDraw();
-    if (onChange && onChange());
+
+    onChange && onChange();
   });
-  textNode.on("dragstart", e => {
+  textNode.on("dragstart", (e) => {
     // 4: middle mouse button
     if (e.evt.buttons === 4) {
       textNode.stopDrag();
     }
   });
-  textNode.on("mousedown", e => {
+  textNode.on("mousedown", (e) => {
     // 0: left mouse button
     if (e.evt.button === 0) {
       textNode.draggable(true);
@@ -380,14 +375,14 @@ function addEventsToMapText(textNode, layer, stage, onChange) {
         textNode.destroy();
         layer.draw();
 
-        if (onChange && onChange());
+        onChange && onChange();
       }
     }
   });
-  textNode.on("mouseenter", function() {
+  textNode.on("mouseenter", function () {
     stage.container().style.cursor = "move";
   });
-  textNode.on("mouseleave", function() {
+  textNode.on("mouseleave", function () {
     stage.container().style.cursor = "default";
   });
 }
@@ -402,31 +397,22 @@ function addEventsToMapText(textNode, layer, stage, onChange) {
  */
 function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
   arrowObjects.startCircle.on("dragend", () => {
-    updateArrowPosition(
-      arrowObjects.arrow,
-      arrowObjects.arrowStroke,
-      arrowObjects.startCircle,
-      arrowObjects.endCircle
-    );
+    updateArrowPosition(arrowObjects.arrow, arrowObjects.arrowStroke, arrowObjects.startCircle, arrowObjects.endCircle);
     layer.batchDraw();
-    if (onChange && onChange());
+
+    onChange && onChange();
   });
   arrowObjects.startCircle.on("dragmove", () => {
-    updateArrowPosition(
-      arrowObjects.arrow,
-      arrowObjects.arrowStroke,
-      arrowObjects.startCircle,
-      arrowObjects.endCircle
-    );
+    updateArrowPosition(arrowObjects.arrow, arrowObjects.arrowStroke, arrowObjects.startCircle, arrowObjects.endCircle);
     layer.batchDraw();
   });
-  arrowObjects.startCircle.on("dragstart", e => {
+  arrowObjects.startCircle.on("dragstart", (e) => {
     // 4: middle mouse button
     if (e.evt.buttons === 4) {
       arrowObjects.startCircle.stopDrag();
     }
   });
-  arrowObjects.startCircle.on("mousedown", e => {
+  arrowObjects.startCircle.on("mousedown", (e) => {
     // 0: left mouse button
     if (e.evt.button === 0) {
       arrowObjects.startCircle.draggable(true);
@@ -443,36 +429,27 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
         arrowObjects.endCircle.destroy();
         layer.batchDraw();
 
-        if (onChange && onChange());
+        onChange && onChange();
       }
     }
   });
   arrowObjects.endCircle.on("dragend", () => {
-    updateArrowPosition(
-      arrowObjects.arrow,
-      arrowObjects.arrowStroke,
-      arrowObjects.startCircle,
-      arrowObjects.endCircle
-    );
+    updateArrowPosition(arrowObjects.arrow, arrowObjects.arrowStroke, arrowObjects.startCircle, arrowObjects.endCircle);
     layer.batchDraw();
-    if (onChange && onChange());
+
+    onChange && onChange();
   });
   arrowObjects.endCircle.on("dragmove", () => {
-    updateArrowPosition(
-      arrowObjects.arrow,
-      arrowObjects.arrowStroke,
-      arrowObjects.startCircle,
-      arrowObjects.endCircle
-    );
+    updateArrowPosition(arrowObjects.arrow, arrowObjects.arrowStroke, arrowObjects.startCircle, arrowObjects.endCircle);
     layer.batchDraw();
   });
-  arrowObjects.endCircle.on("dragstart", e => {
+  arrowObjects.endCircle.on("dragstart", (e) => {
     // 4: middle mouse button
     if (e.evt.buttons === 4) {
       arrowObjects.endCircle.stopDrag();
     }
   });
-  arrowObjects.endCircle.on("mousedown", e => {
+  arrowObjects.endCircle.on("mousedown", (e) => {
     // 0: left mouse button
     if (e.evt.button === 0) {
       arrowObjects.endCircle.draggable(true);
@@ -489,11 +466,11 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
         arrowObjects.endCircle.destroy();
         layer.batchDraw();
 
-        if (onChange && onChange());
+        onChange && onChange();
       }
     }
   });
-  arrowObjects.arrow.on("mousedown", e => {
+  arrowObjects.arrow.on("mousedown", (e) => {
     // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete arrow
@@ -504,20 +481,20 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
         arrowObjects.endCircle.destroy();
         layer.batchDraw();
 
-        if (onChange && onChange());
+        onChange && onChange();
       }
     }
   });
-  arrowObjects.startCircle.on("mouseenter", function() {
+  arrowObjects.startCircle.on("mouseenter", function () {
     stage.container().style.cursor = "move";
   });
-  arrowObjects.startCircle.on("mouseleave", function() {
+  arrowObjects.startCircle.on("mouseleave", function () {
     stage.container().style.cursor = "default";
   });
-  arrowObjects.endCircle.on("mouseenter", function() {
+  arrowObjects.endCircle.on("mouseenter", function () {
     stage.container().style.cursor = "move";
   });
-  arrowObjects.endCircle.on("mouseleave", function() {
+  arrowObjects.endCircle.on("mouseleave", function () {
     stage.container().style.cursor = "default";
   });
 }
@@ -548,23 +525,16 @@ function saveLayerToJSON(layer, path) {
  */
 function loadMapLayerFromJSON(JSONPath, stage, settings, imageOnChange) {
   let newLayer = new Konva.Layer();
-  let jsonString = fs.readFileSync(JSONPath);
   try {
-    let children = JSON.parse(jsonString).children;
-    children.forEach(child => {
-      addMapImageToLayer(
-        settings.mapImageFolderPath + child.attrs.imageId + ".png",
-        { x: child.attrs.x, y: child.attrs.y },
-        settings.cellSize,
-        newLayer,
-        image => {
-          addEventsToMapImage(image, newLayer, settings.cellSize, stage, () => {
-            imageOnChange();
-          });
-        }
-      );
+    JSON.parse(fs.readFileSync(JSONPath, "utf8")).children.forEach((child) => {
+      addMapImageToLayer(settings.mapImageFolderPath + child.attrs.imageId + ".png", { x: child.attrs.x, y: child.attrs.y }, settings.cellSize, newLayer, (image) => {
+        addEventsToMapImage(image, newLayer, settings.cellSize, stage, () => {
+          imageOnChange();
+        });
+      });
     });
   } catch (error) {}
+
   return newLayer;
 }
 
@@ -578,47 +548,25 @@ function loadMapLayerFromJSON(JSONPath, stage, settings, imageOnChange) {
  *
  * @returns {*} Konva Layer
  */
-function loadMapMarkerLayerFromJSON(
-  JSONPath,
-  stage,
-  mapMarkerIconFolderPath,
-  onChange
-) {
+function loadMapMarkerLayerFromJSON(JSONPath, stage, mapMarkerIconFolderPath, onChange) {
   let newLayer = new Konva.Layer();
   try {
-    let jsonString = fs.readFileSync(JSONPath);
-    let children = JSON.parse(jsonString).children;
-    children.forEach(child => {
+    JSON.parse(fs.readFileSync(JSONPath, "utf8")).children.forEach((child) => {
       if (child.className === "Image") {
-        addMarkerToLayer(
-          mapMarkerIconFolderPath + child.attrs.imageId + ".svg",
-          { x: child.attrs.x, y: child.attrs.y },
-          newLayer,
-          image => {
-            addEventsToMapMarker(image, newLayer, stage, () => {
-              onChange();
-            });
-          }
-        );
+        addMarkerToLayer(mapMarkerIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newLayer, (image) => {
+          addEventsToMapMarker(image, newLayer, stage, () => {
+            onChange();
+          });
+        });
       } else if (child.className === "Text") {
-        addTextToLayer(
-          child.attrs.text,
-          { x: child.attrs.x, y: child.attrs.y },
-          newLayer,
-          textNode => {
-            addEventsToMapText(textNode, newLayer, stage, () => {
-              onChange();
-            });
-          }
-        );
+        addTextToLayer(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newLayer, (textNode) => {
+          addEventsToMapText(textNode, newLayer, stage, () => {
+            onChange();
+          });
+        });
       } else if (child.className === "Arrow" && child.attrs.type === "Arrow") {
-        const points = [
-          child.attrs.points[0],
-          child.attrs.points[1],
-          child.attrs.points[2],
-          child.attrs.points[3]
-        ];
-        addArrowToLayer(points, newLayer, objects => {
+        const points = [child.attrs.points[0], child.attrs.points[1], child.attrs.points[2], child.attrs.points[3]];
+        addArrowToLayer(points, newLayer, (objects) => {
           // Events
           addEventsToMapArrow(objects, newLayer, stage, () => {
             onChange();
@@ -627,6 +575,7 @@ function loadMapMarkerLayerFromJSON(
       }
     });
   } catch (error) {}
+
   return newLayer;
 }
 
@@ -657,10 +606,10 @@ function getRelativePointerPosition(node) {
  * @returns {{x: number, y: number}}
  */
 function alignPositionToGrid(position, cellSize) {
-  let x = parseInt(position.x / cellSize.x) * cellSize.x;
-  let y = parseInt(position.y / cellSize.y) * cellSize.y;
-
-  return { x: x, y: y };
+  return {
+    x: (position.x / cellSize.x) * cellSize.x,
+    y: (position.y / cellSize.y) * cellSize.y,
+  };
 }
 
 /**
@@ -702,12 +651,7 @@ function getArrowConnectorPoints(from, to, radius) {
   const dy = to.y() - from.y();
   let angle = Math.atan2(-dy, dx);
 
-  return [
-    from.x() + -radius * Math.cos(angle + Math.PI),
-    from.y() + radius * Math.sin(angle + Math.PI),
-    to.x() + -radius * Math.cos(angle),
-    to.y() + radius * Math.sin(angle)
-  ];
+  return [from.x() + -radius * Math.cos(angle + Math.PI), from.y() + radius * Math.sin(angle + Math.PI), to.x() + -radius * Math.cos(angle), to.y() + radius * Math.sin(angle)];
 }
 
 module.exports = {
@@ -726,5 +670,5 @@ module.exports = {
   addTextToLayer,
   addEventsToMapText,
   addArrowToLayer,
-  addEventsToMapArrow
+  addEventsToMapArrow,
 };
