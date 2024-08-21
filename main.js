@@ -1,10 +1,11 @@
 const { app, globalShortcut, ipcMain } = require("electron/main");
-const { createNotesWindow } = require("./features/notes/notes.js");
+const { createWindow: createNotesWindow } = require("./features/notes/notes.js");
+const { createWindow: createMapsWindow } = require("./features/maps/maps.js");
 const { getSources } = require("./features/screenCapture/screenCapture.js");
 
 app.whenReady().then(() => {
-  createNotesWindow();
-  //createWindow({ width: 1800, height: 880 }, "map.html");
+  //createNotesWindow();
+  createMapsWindow();
 
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {

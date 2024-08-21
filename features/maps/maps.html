@@ -2,19 +2,26 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Map</title>
-    <link rel="stylesheet" href="node_modules\bootstrap\dist\css\bootstrap.min.css" />
-    <link rel="stylesheet" href="main.css" />
+    <title>Maps</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self'; 
+        script-src 'self'; 
+        img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="..\..\node_modules\bootstrap\dist\css\bootstrap.min.css" />
+    <link rel="stylesheet" href="maps.css" />
   </head>
   <body>
     <div class="container-fluid">
       <div class="form-group w-25">
         <label>Select captured window</label>
         <div class="input-group d-flex flex-row">
-          <select class="form-control remove-right-radius" id="screenshot-window-list"> </select>
+          <select class="form-control remove-right-radius" id="screenshot-source-list"> </select>
           <div class="input-group-append">
-            <button class="btn btn-primary hovertooltip" id="refresh-windows-list-button" data-toggle="tooltip" title="Refresh window list">
-              <img class="img-center" src="icons/refresh.svg" alt="refresh the window list" />
+            <button class="btn btn-primary hovertooltip" id="refresh-sources-list-button" data-toggle="tooltip" title="Refresh source list">
+              <img class="img-center" src="../../icons/refresh.svg" alt="refresh the source list" />
             </button>
           </div>
         </div>
@@ -27,7 +34,7 @@
             <div class="card-body">
               <div class="form-group d-flex flex-column">
                 <button class="btn btn-primary hovertooltip" id="screenshot-button" data-toggle="tooltip" title="Take a screenshot">
-                  <img src="icons/addscreenshot.svg" alt="take screenshot button" />
+                  <img src="../../icons/addscreenshot.svg" alt="take screenshot button" />
                   <br />
                   (Ctrl+Shift+M)
                 </button>
@@ -39,28 +46,28 @@
         <div class="col-8">
           <div class="row">
             <div id="map-tools-container" class="d-flex map-tools">
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/checkmark.svg" />
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/warning.svg" />
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/shoppingcart.svg" />
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/gear.svg" />
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/in.svg" />
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/question.svg" />
-              <img class="map-icon border border-bottom-0 mr-1 width-50" src="./icons/block.svg" />
-              <img class="map-icon border border-bottom-0 mr-4 width-50" src="./icons/speechbubble.svg" />
-              <img id="map-arrow" class="border border-bottom-0 mr-1 width-50" src="./icons/arrow.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/checkmark.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/warning.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/shoppingcart.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/gear.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/in.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/question.svg" />
+              <img class="map-icon border border-bottom-0 mr-1 width-50" src="../../icons/block.svg" />
+              <img class="map-icon border border-bottom-0 mr-4 width-50" src="../../icons/speechbubble.svg" />
+              <img id="map-arrow" class="border border-bottom-0 mr-1 width-50" src="../../icons/arrow.svg" />
               <div class="border border-bottom-0 d-flex mr-1">
-                <img id="map-text" class="width-50" src="./icons/text.svg" />
+                <img id="map-text" class="width-50" src="../../icons/text.svg" />
                 <input type="text" id="map-text-input" placeholder="Add text to map..." />
               </div>
             </div>
           </div>
           <div class="row">
             <div class="border" id="stage-parent">
-              <div id="mapContainer" style="width: 704px; height: 640px"></div>
+              <div id="mapContainer"></div>
             </div>
           </div>
           <div>
-            <img src="icons/info.svg" alt="info" />
+            <img src="../../icons/info.svg" alt="info" />
             <span>Drag and drop icons/images to add them to map. Right click to delete the icons/images. Zoom and move the map with mouse wheel.</span>
           </div>
         </div>
@@ -72,7 +79,7 @@
                   <input id="new-map-name-input" class="form-control input-group-append" type="text" placeholder="Map name..." />
                   <div class="input-group-append">
                     <button type="submit" class="btn btn-success hovertooltip" id="new-map-button" data-toggle="tooltip" title="Add a new map">
-                      <img class="img-center" src="icons/add.svg" alt="add map button" />
+                      <img class="img-center" src="../../icons/add.svg" alt="add map button" />
                     </button>
                   </div>
                 </div>
@@ -81,7 +88,7 @@
             </div>
           </div>
           <div>
-            <img src="icons/info.svg" alt="info" />
+            <img src="../../icons/info.svg" alt="info" />
             <span>Right click to delete a map.</span>
           </div>
         </div>
@@ -90,6 +97,4 @@
   </body>
 </html>
 
-<script>
-  require("./mapRenderer.js");
-</script>
+<script src="./mapsRenderer.js"></script>

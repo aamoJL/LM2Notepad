@@ -10,7 +10,7 @@ const noteScreenshotFolder = path.join(process.resourcesPath, "/screenshots/note
 /**
  * Creates window for notes
  */
-function createNotesWindow() {
+function createWindow() {
   let win = new BrowserWindow({
     width: 1200,
     height: 750,
@@ -250,5 +250,5 @@ function scanScreenshot(buffer, logger) {
 }
 
 module.exports = {
-  createNotesWindow,
+  createWindow,
 };

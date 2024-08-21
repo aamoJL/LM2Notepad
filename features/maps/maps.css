@@ -1,0 +1,40 @@
+body {
+  overflow-y: hidden;
+}
+
+.screenshot-list-container {
+  height: 600px;
+  overflow-y: auto;
+}
+
+#stage-parent {
+  width: 100%;
+  overflow: hidden;
+}
+
+#mapContainer {
+  width: 704px;
+  height: 640px;
+}
+
+.map-tools {
+  height: 50px;
+}
+
+.width-50 {
+  width: 50px;
+}
+
+.map-text-container .map-icon {
+  margin-right: 0px;
+}
+
+.remove-right-radius {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.img-center {
+  display: flex;
+  height: 1.2em;
+}
