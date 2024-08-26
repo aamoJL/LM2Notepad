@@ -1,9 +1,14 @@
-const { BrowserWindow, globalShortcut, ipcMain } = require("electron");
+/**
+ * Main process for maps window
+ */
+
+const { BrowserWindow, globalShortcut, ipcMain, dialog } = require("electron");
 const path = require("node:path");
 const fs = require("fs");
 const screenCapture = require("../screenCapture/screenCapture.js");
 
 const mapScreenshotFolder = path.join(process.resourcesPath, "/screenshots/map/");
+const mapsFolder = path.join(process.resourcesPath, "/maps/");
 
 /**
  * Creates window for maps
@@ -27,12 +32,6 @@ function createWindow() {
 
   win.on("closed", () => {
     globalShortcut.unregister("CommandOrControl+shift+M");
-    // TODO: remove handlers
-    ipcMain.removeHandler("get-map-screenshot-path");
-    ipcMain.removeHandler("get-screenshots");
-    ipcMain.removeHandler("take-screenshot");
-    ipcMain.removeHandler("add-screenshot");
-    ipcMain.removeHandler("delete-screenshot");
   });
 
   ipcMain.handle("get-map-screenshot-path", () => {
@@ -53,6 +52,26 @@ function createWindow() {
 
   ipcMain.handle("delete-screenshot", (_e, name) => {
     return deleteScreenshot(name);
+  });
+
+  ipcMain.handle("get-maps", () => {
+    return getMaps();
+  });
+
+  ipcMain.handle("add-map", (_e, name) => {
+    return addMap(name);
+  });
+
+  ipcMain.handle("delete-map", (_e, name) => {
+    return deleteMap(name);
+  });
+
+  ipcMain.on("show-dialog", (_e, options) => {
+    dialog.showMessageBox(win, options);
+  });
+
+  ipcMain.handle("confirm-dialog", (_e, options) => {
+    return dialog.showMessageBox(win, options);
   });
 }
 
@@ -108,7 +127,9 @@ function takeScreenshot(source) {
  */
 function addScreenshot(buffer) {
   if (!fs.existsSync(mapScreenshotFolder)) {
-    fs.mkdirSync(mapScreenshotFolder);
+    fs.mkdirSync(mapScreenshotFolder, {
+      recursive: true,
+    });
     console.log("screenshot folder created");
   }
 
@@ -139,6 +160,70 @@ function deleteScreenshot(name) {
       fs.unlinkSync(path);
       resolve(true);
     } else reject("Screenshot not found");
+  });
+}
+
+/**
+ * Return array of maps names
+ */
+function getMaps() {
+  return new Promise((resolve, reject) => {
+    fs.readdir(mapsFolder, (err, dir) => {
+      if (err) reject(err);
+
+      var fileNames = Array.from(dir, (x) => path.parse(x).name);
+      resolve(fileNames);
+    });
+  });
+}
+
+/**
+ * Saves new map as a json file
+ * @param {string} name
+ */
+function addMap(name) {
+  if (!fs.existsSync(mapsFolder)) {
+    fs.mkdirSync(mapsFolder);
+    console.log("Maps folder created");
+  }
+
+  return new Promise((resolve, reject) => {
+    if (name.trim().length === 0) {
+      reject("Name is invalid");
+      return;
+    }
+
+    let filePath = path.join(mapsFolder, name + ".json");
+
+    if (fs.existsSync(filePath)) {
+      reject("Map already exists");
+    } else {
+      fs.writeFile(filePath, "[]", (err) => {
+        if (err) {
+          console.error(err);
+          reject("Error occured while saving the file");
+        } else {
+          console.log("Map added: " + name);
+          resolve(name);
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Deletes map file
+ * @param {string} name
+ */
+function deleteMap(name) {
+  return new Promise((resolve, reject) => {
+    const path = mapsFolder + name + ".json";
+    if (fs.existsSync(path)) {
+      fs.unlinkSync(path);
+      resolve(true);
+    } else reject("Map not found");
+
+    // TODO: markers
   });
 }
 

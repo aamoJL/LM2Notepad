@@ -1,5 +1,5 @@
 /**
- * Renderer script for notes window
+ * Renderer process for notes window
  */
 
 window.addEventListener("load", async () => {
@@ -38,7 +38,7 @@ document.getElementById("screenshot-button")?.addEventListener("click", () => {
           const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
           const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
 
-          await appendNoteToContainer(note.text, screenshotPath, note.id);
+          await prependNoteToContainer(note.text, screenshotPath, note.id);
         })
         .catch((err) => console.error(err));
     })
@@ -62,7 +62,7 @@ document.getElementById("scan-button")?.addEventListener("click", () => {
           const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
           const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
 
-          await appendNoteToContainer(note.text, screenshotPath, note.id);
+          await prependNoteToContainer(note.text, screenshotPath, note.id);
         })
         .catch((err) => {
           updateScanProgress(100);
@@ -83,7 +83,7 @@ document.getElementById("add-note-button")?.addEventListener("click", () => {
         const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
         const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
 
-        await appendNoteToContainer(note.text, screenshotPath, note.id);
+        await prependNoteToContainer(note.text, screenshotPath, note.id);
 
         // Clear textarea
         if (noteTextInput) {
@@ -135,7 +135,7 @@ async function refreshNoteList() {
   if (container) {
     notes.forEach(async (note) => {
       const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
-      await appendNoteToContainer(note.text, screenshotPath, note.id);
+      await prependNoteToContainer(note.text, screenshotPath, note.id);
     });
   }
 }
@@ -221,7 +221,7 @@ async function scanScreenshot(buffer) {
  * @param {string} screenshotPath
  * @param {number} id
  */
-async function appendNoteToContainer(text, screenshotPath, id) {
+async function prependNoteToContainer(text, screenshotPath, id) {
   const container = document.getElementById("json-text-container");
   const cardElement = createNoteCardElement(text, screenshotPath, id);
 
@@ -365,7 +365,7 @@ function updateScanProgress(value) {
  * Sanitizes string
  *
  * @param {*} unsafe
- * @returns
+ * @returns {string}
  */
 function escapeHtml(unsafe) {
   return unsafe.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");

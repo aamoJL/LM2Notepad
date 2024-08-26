@@ -11,7 +11,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     add: (buffer) => ipcRenderer.invoke("add-screenshot", buffer),
     delete: (name) => ipcRenderer.invoke("delete-screenshot", name),
   },
+  map: {
+    get: () => ipcRenderer.invoke("get-maps"),
+    add: (name) => ipcRenderer.invoke("add-map", name),
+    delete: (name) => ipcRenderer.invoke("delete-map", name),
+  },
   path: {
     mapScreenshotFolder: () => ipcRenderer.invoke("get-map-screenshot-path"),
+  },
+  dialog: {
+    show: (options) => ipcRenderer.send("show-dialog", options),
+    confirm: (options) => ipcRenderer.invoke("confirm-dialog", options),
   },
 });

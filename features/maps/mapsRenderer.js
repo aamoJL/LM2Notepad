@@ -1,6 +1,8 @@
 /*
- * Renderer script for maps window
+ * Renderer process for maps window
  */
+
+var selectedMap = null;
 
 window.addEventListener("load", async () => {
   // @ts-ignore
@@ -10,6 +12,7 @@ window.addEventListener("load", async () => {
 
   await refreshSourceList();
   refreshScreenshotList();
+  refreshMapList();
 });
 
 document.getElementById("refresh-sources-list-button")?.addEventListener("click", async () => {
@@ -27,7 +30,7 @@ document.getElementById("screenshot-button")?.addEventListener("click", () => {
         .then(async (screenshotName) => {
           // @ts-ignore
           const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder();
-          appendScreenshotToContainer(screenshotName, screenshotFolder);
+          prependScreenshotToContainer(screenshotName, screenshotFolder);
         })
         .catch((err) => console.error(err));
     })
@@ -35,8 +38,28 @@ document.getElementById("screenshot-button")?.addEventListener("click", () => {
 });
 document.getElementById("new-map-button")?.addEventListener("click", (e) => {
   e.preventDefault();
-  console.log("map");
-  // TODO: add map
+
+  let mapNameInput = document.getElementById("new-map-name-input");
+  // @ts-ignore
+  let mapName = mapNameInput?.value ?? "";
+
+  addMap(mapName)
+    .then((name) => {
+      prependMapToContainer(name);
+
+      if (selectedMap !== name) selectMap(name);
+
+      // @ts-ignore
+      mapNameInput.value = "";
+    })
+    .catch(async (err) => {
+      console.error(err);
+      // @ts-ignore
+      await window.electronAPI.dialog.show({
+        type: "error",
+        message: err.message,
+      });
+    });
 });
 
 /**
@@ -74,12 +97,26 @@ function refreshScreenshotList() {
   window.electronAPI.screenshot
     .get()
     .then(async (screenshots) => {
-      console.log(screenshots);
       // @ts-ignore
       const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder();
 
       screenshots.forEach((screenshotName) => {
-        appendScreenshotToContainer(screenshotName, screenshotFolder);
+        prependScreenshotToContainer(screenshotName, screenshotFolder);
+      });
+    })
+    .catch((err) => console.error(err));
+}
+
+/**
+ * Appends map buttons to map list
+ */
+function refreshMapList() {
+  // @ts-ignore
+  window.electronAPI.map
+    .get()
+    .then((maps) => {
+      maps.forEach((map) => {
+        prependMapToContainer(map);
       });
     })
     .catch((err) => console.error(err));
@@ -106,11 +143,27 @@ function takeScreenshot(sourceName) {
 }
 
 /**
+ * @param {string} mapName
+ */
+function addMap(mapName) {
+  // @ts-ignore
+  return window.electronAPI.map.add(mapName);
+}
+
+/**
+ * @param {string} name
+ */
+function deleteMap(name) {
+  // @ts-ignore
+  return window.electronAPI.map.delete(name);
+}
+
+/**
  * Appends screenshot to the screenshto list
  * @param {string} screenshotName - Screenshot's file name
  * @param {string} screenshotFolder - Path to screenshot folder
  */
-function appendScreenshotToContainer(screenshotName, screenshotFolder) {
+function prependScreenshotToContainer(screenshotName, screenshotFolder) {
   const screenshotList = document.getElementById("map-screenshot-list");
   const screenshotPath = screenshotFolder + screenshotName + ".png";
 
@@ -124,28 +177,113 @@ function appendScreenshotToContainer(screenshotName, screenshotFolder) {
     screenshotList.prepend(img);
 
     // Add event to remove the image with right mouse click
-    img.addEventListener("mousedown", (e) => {
-      if (e.button === 2) {
-        // TODO: remove screenshot
-        if (window.confirm("Delete?")) {
-          // @ts-ignore
-          window.electronAPI.screenshot
-            .delete(screenshotName)
-            .then(() => {
-              screenshotList.removeChild(img);
-            })
-            .catch((err) => {
-              console.error(err);
-            });
-        }
-      }
+    img.addEventListener("contextmenu", () => {
+      // @ts-ignore
+      window.electronAPI.dialog
+        .confirm({
+          message: "Delete screenshot?",
+          buttons: ["Yes", "No"],
+          type: "question",
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            // @ts-ignore
+            window.electronAPI.screenshot
+              .delete(screenshotName)
+              .then(() => {
+                screenshotList.removeChild(img);
+              })
+              .catch((err) => {
+                console.error(err);
+              });
+          }
+        });
     });
   }
 }
 
-//const mapDrawing = require("./mapsDrawing.js");
+/**
+ * Prepends map element to the map container
+ * @param {string} name
+ */
+function prependMapToContainer(name) {
+  let mapLinkContainer = document.getElementById("map-link-list");
 
-// const resourcePath = process.resourcesPath;
+  let button = document.createElement("button");
+  button.type = "button";
+  button.classList.add("list-group-item", "list-group-item-action");
+  button.innerText = escapeHtml(name);
+
+  button.addEventListener("click", () => {
+    selectMap(name);
+  });
+
+  button.addEventListener("contextmenu", () => {
+    // @ts-ignore
+    window.electronAPI.dialog
+      .confirm({
+        message: "Delete map: " + name,
+        buttons: ["Yes", "No"],
+        type: "question",
+      })
+      .then((res) => {
+        if (res.response === 0) {
+          deleteMap(name).then(() => {
+            if (selectedMap === name) selectMap("");
+
+            mapLinkContainer?.removeChild(button);
+          });
+        }
+      });
+  });
+
+  // @ts-ignore
+  let index = [...mapLinkContainer?.children].findIndex((x) => x.innerText >= name);
+
+  if (index > -1) {
+    mapLinkContainer?.insertBefore(button, mapLinkContainer.childNodes[index]);
+  } else {
+    mapLinkContainer?.append(button);
+  }
+}
+
+/**
+ * Change selected map
+ * @param {string} name - Name of the selected map
+ */
+function selectMap(name) {
+  if (selectedMap === name) return;
+
+  selectedMap = name;
+
+  let mapLinkContainer = document.getElementById("map-link-list");
+
+  if (mapLinkContainer) {
+    mapLinkContainer.querySelector(".active")?.classList.remove("active");
+
+    if (selectedMap) {
+      Array.from(mapLinkContainer.querySelectorAll("button"))
+        .find((x) => x.innerText === name)
+        ?.classList.add("active");
+      // TODO: load map
+      //   if (mapName !== "") {
+      //     loadMap(mapName);
+      //     loadMapMarkers(mapName);
+      //   }
+    }
+  }
+}
+
+/**
+ * Sanitizes string
+ *
+ * @param {*} unsafe
+ * @returns {string}
+ */
+function escapeHtml(unsafe) {
+  return unsafe.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+
 // const containerParent = document.getElementById("stage-parent"); // Container that has the Konva container as a child
 
 // const mapJSONFolder = path.join(resourcePath, "/maps/"); // Path to map JSON files
@@ -177,27 +315,11 @@ function appendScreenshotToContainer(screenshotName, screenshotFolder) {
 // // Window events ------------------------------------------------------
 
 // window.addEventListener("load", () => {
-//   // Check and add folders if they does not exist.
-//   if (!fs.existsSync(path.join(resourcePath, "/screenshots/"))) {
-//     fs.mkdirSync(path.join(resourcePath, "/screenshots"));
-//     console.log("created");
-//   }
-//   if (!fs.existsSync(path.join(resourcePath, "/screenshots/map/"))) {
-//     fs.mkdirSync(path.join(resourcePath, "/screenshots/map"));
-//     console.log("created");
-//   }
-//   if (!fs.existsSync(path.join(resourcePath, "/maps/"))) {
-//     fs.mkdirSync(path.join(resourcePath, "/maps"));
-//     console.log("created");
-//   }
 //   if (!fs.existsSync(path.join(resourcePath, "/maps/markers/"))) {
 //     fs.mkdirSync(path.join(resourcePath, "/maps/markers"));
 //     console.log("created");
 //   }
 //   // Load content
-//   refreshWindowsList();
-//   refreshScreenshotList();
-//   refreshMapLinkList();
 //   mapDrawing.fitStageIntoParentContainer(
 //     containerParent,
 //     {
@@ -230,20 +352,6 @@ function appendScreenshotToContainer(screenshotName, screenshotFolder) {
 //     },
 //     stage
 //   );
-// });
-
-// // Button events -------------------------------------------------------
-
-// $("#new-map-button").on("click", function (e) {
-//   e.preventDefault();
-//   let newMapNameInput = $("#new-map-name-input");
-//   let newMapName = newMapNameInput.val();
-
-//   if (newMapName !== undefined) {
-//     addNewMap(newMapName.toString());
-//   }
-
-//   newMapNameInput.val(""); // Clear name input
 // });
 
 // // Konva stage events --------------------------------------------------
@@ -478,116 +586,4 @@ function appendScreenshotToContainer(screenshotName, screenshotFolder) {
 //   }
 //   let markersPath = mapMarkersJSONFolder + mapName + "-markers.json";
 //   mapDrawing.saveLayerToJSON(markerLayer, markersPath);
-// }
-
-// // Other functions ----------------------------------------------------------
-
-// /**
-//  * Append map links from maps folder to link list
-//  */
-// function refreshMapLinkList() {
-//   let mapLinkList = $("#map-link-list");
-//   mapLinkList.empty();
-//   // Get files in directory
-//   fs.readdir(mapJSONFolder, (err, dir) => {
-//     $.each(dir, function (index, value) {
-//       // Only json files are valid maps
-//       if (path.parse(value).ext !== ".json") {
-//         return;
-//       }
-//       let mapName = path.parse(value).name;
-//       // Name of the map without spaces for button ID
-//       var mapNameNoSpaces = mapName.replace(/\s+/g, "-");
-//       // if no map is selected, select first map in directory
-//       mapLinkList.append(`
-//       <button
-//         id="${mapNameNoSpaces}-button"
-//         type="button"
-//         class="list-group-item list-group-item-action"
-//       >
-//         ${mapName}
-//       </button>
-//       `);
-//       $(`#${mapNameNoSpaces}-button`).on("click", function (e) {
-//         selectMap(mapName);
-//       });
-//       $(`#${mapNameNoSpaces}-button`).on("contextmenu", function (e) {
-//         deleteMap(mapName);
-//       });
-//       if (selectedMap === "" || selectedMap === mapName) {
-//         selectMap(mapName);
-//       }
-//     });
-//   });
-// }
-
-// /**
-//  * Change selected map
-//  * @param {string} mapName -Name of the selected map
-//  */
-// function selectMap(mapName) {
-//   var mapNameNoSpaces = mapName.replace(/\s+/g, "-");
-//   if (selectedMap !== "") {
-//     var selectedMapNameNoSpaces = selectedMap.replace(/\s+/g, "-");
-//     $(`#${selectedMapNameNoSpaces}-button`).removeClass("active");
-//   }
-//   selectedMap = mapName;
-//   $(`#${mapNameNoSpaces}-button`).addClass("active");
-
-//   if (mapName !== "") {
-//     loadMap(mapName);
-//     loadMapMarkers(mapName);
-//   }
-// }
-
-// /**
-//  * Delete map files
-//  *
-//  * @param {string} mapName - Name of the map that will be deleted
-//  */
-// function deleteMap(mapName) {
-//   if (confirm("Delete map: " + mapName)) {
-//     if (mapName === "") {
-//       alert("Map name can't be empty");
-//     }
-
-//     var mapNameNoSpaces = mapName.replace(/\s+/g, "-");
-
-//     if (selectedMap === mapName) {
-//       selectedMap = "";
-//     }
-
-//     if (fs.existsSync(mapJSONFolder + mapNameNoSpaces + ".json")) {
-//       fs.unlinkSync(mapJSONFolder + mapNameNoSpaces + ".json");
-//     }
-//     if (fs.existsSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json")) {
-//       fs.unlinkSync(mapMarkersJSONFolder + mapNameNoSpaces + "-markers.json");
-//     }
-
-//     refreshMapLinkList();
-//   }
-// }
-
-// /**
-//  * Add json file for the new map data and refresh map link list
-//  *
-//  * @param {string} mapName -Name of the new map
-//  */
-// function addNewMap(mapName) {
-//   if (mapName === "") {
-//     return alert("Map name can't be empty");
-//   }
-//   try {
-//     if (fs.existsSync(mapJSONFolder + mapName + ".json")) {
-//       // File exists, give error
-//       alert("Map already exists");
-//     } else {
-//       // File does not exist, make it
-//       var path = mapJSONFolder + mapName + ".json";
-//       fs.closeSync(fs.openSync(path, "a"));
-//       refreshMapLinkList();
-//     }
-//   } catch (err) {
-//     console.error(err);
-//   }
 // }

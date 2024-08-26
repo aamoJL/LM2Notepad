@@ -1,3 +1,7 @@
+/**
+ * Main process for notes window
+ */
+
 const { BrowserWindow, globalShortcut, ipcMain } = require("electron/main");
 const path = require("node:path");
 const fs = require("fs");
