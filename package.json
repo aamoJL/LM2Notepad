@@ -13,8 +13,6 @@
   "license": "ISC",
   "dependencies": {
     "bootstrap": "^5.3.3",
-    "konva": "^4.2.2",
-    "popper.js": "^1.16.0",
     "tesseract.js": "^5.1.0"
   },
   "devDependencies": {

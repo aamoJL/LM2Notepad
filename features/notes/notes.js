@@ -38,14 +38,6 @@ function createWindow() {
     globalShortcut.unregister("CommandOrControl+shift+A");
     globalShortcut.unregister("CommandOrControl+shift+S");
     globalShortcut.unregister("CommandOrControl+shift+X");
-
-    ipcMain.removeHandler("get-note-screenshot-path");
-    ipcMain.removeHandler("add-note");
-    ipcMain.removeHandler("get-notes");
-    ipcMain.removeHandler("delete-note");
-    ipcMain.removeHandler("update-note");
-    ipcMain.removeHandler("take-screenshot");
-    ipcMain.removeHandler("scan-screenshot");
   });
 
   ipcMain.handle("get-note-screenshot-path", () => {

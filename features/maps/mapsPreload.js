@@ -14,7 +14,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   map: {
     get: () => ipcRenderer.invoke("get-maps"),
     add: (name) => ipcRenderer.invoke("add-map", name),
+    update: ({ name, json }) => ipcRenderer.invoke("update-map", { name, json }),
     delete: (name) => ipcRenderer.invoke("delete-map", name),
+    markers: {
+      update: ({ name, json }) => ipcRenderer.invoke("update-markers", { name, json }),
+    },
   },
   path: {
     mapScreenshotFolder: () => ipcRenderer.invoke("get-map-screenshot-path"),

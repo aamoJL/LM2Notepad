@@ -9,6 +9,8 @@ const screenCapture = require("../screenCapture/screenCapture.js");
 
 const mapScreenshotFolder = path.join(process.resourcesPath, "/screenshots/map/");
 const mapsFolder = path.join(process.resourcesPath, "/maps/");
+const mapMarkersFolder = path.join(process.resourcesPath, "/maps/markers/");
+// const mapMarkerIconFolder = path.join(__dirname, "/icons/"); // Path to icons
 
 /**
  * Creates window for maps
@@ -62,8 +64,16 @@ function createWindow() {
     return addMap(name);
   });
 
+  ipcMain.handle("update-map", (_e, { name, json }) => {
+    return updateMap(name, json);
+  });
+
   ipcMain.handle("delete-map", (_e, name) => {
     return deleteMap(name);
+  });
+
+  ipcMain.handle("update-markers", (_e, { name, json }) => {
+    return updateMapMarkers(name, json);
   });
 
   ipcMain.on("show-dialog", (_e, options) => {
@@ -212,6 +222,32 @@ function addMap(name) {
 }
 
 /**
+ * Updates map data to a file
+ * @param {string} name - Map name
+ * @param {string} json - Map data
+ */
+function updateMap(name, json) {
+  return new Promise((resolve, reject) => {
+    if (name.trim().length === 0) {
+      reject("Name is invalid");
+      return;
+    }
+
+    let filePath = path.join(mapsFolder, name + ".json");
+
+    fs.writeFile(filePath, json, (err) => {
+      if (err) {
+        console.error(err);
+        reject("Error occured while saving the file");
+      } else {
+        console.log("Map updated: " + name);
+        resolve(name);
+      }
+    });
+  });
+}
+
+/**
  * Deletes map file
  * @param {string} name
  */
@@ -224,6 +260,32 @@ function deleteMap(name) {
     } else reject("Map not found");
 
     // TODO: markers
+  });
+}
+
+/**
+ * Saves map marker data to a file
+ * @param {string} name - Map name
+ * @param {string} json - Marker data
+ */
+function updateMapMarkers(name, json) {
+  return new Promise((resolve, reject) => {
+    if (name.trim().length === 0) {
+      reject("Name is invalid");
+      return;
+    }
+
+    let filePath = path.join(mapMarkersFolder, name + "-markers.json");
+
+    fs.writeFile(filePath, json, (err) => {
+      if (err) {
+        console.error(err);
+        reject("Error occured while saving the file");
+      } else {
+        console.log("Map markers updated: " + name);
+        resolve(name);
+      }
+    });
   });
 }
 
