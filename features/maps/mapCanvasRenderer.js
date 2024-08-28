@@ -20,11 +20,11 @@ const stage = new Konva.Stage({
   draggable: false,
 });
 // @ts-ignore
-const gridLayer = new Konva.Layer();
+var gridLayer = new Konva.Layer();
 // @ts-ignore
-const mapLayer = new Konva.Layer();
+var mapLayer = new Konva.Layer();
 // @ts-ignore
-const markerLayer = new Konva.Layer();
+var markerLayer = new Konva.Layer();
 
 let dragItemType = ""; // Type of the item that is being dragged
 let dragItemURL = ""; // Path to image that is being dragged
@@ -217,79 +217,91 @@ function addDropEvents() {
     e.preventDefault();
     stage.setPointersPositions(e);
 
-    switch (dragItemType) {
-      case "image":
-        addImage(alignPositionToGrid(getRelativePointerPosition(mapLayer), mapOptions.cellSize));
-        break;
-      case "icon":
-        addIcon(getRelativePointerPosition(markerLayer));
-        break;
-      case "text":
-        var textInput = document.getElementById("map-text-input");
-        // @ts-ignore
-        var text = textInput?.value ?? "";
-        // @ts-ignore
-        textInput.value = "";
-        addText(text, getRelativePointerPosition(markerLayer));
-        break;
-      case "arrow":
-        addArrow(getRelativePointerPosition(markerLayer));
-        break;
+    if (dragItemType) {
+      switch (dragItemType) {
+        case "image":
+          addImage(alignPositionToGrid(getRelativePointerPosition(mapLayer), mapOptions.cellSize), dragItemURL, mapLayer);
+          updateMap(selectedMap, mapLayer.toJSON());
+          break;
+        case "icon":
+          const iconPosition = getRelativePointerPosition(markerLayer);
+          const iconOffset = 35;
+          addIcon(dragItemURL, { x: iconPosition.x - iconOffset, y: iconPosition.y - iconOffset }, markerLayer);
+          updateMapMarkers(selectedMap, markerLayer.toJSON());
+          break;
+        case "text":
+          const textInput = document.getElementById("map-text-input");
+          // @ts-ignore
+          const text = textInput?.value ?? "";
+          // @ts-ignore
+          textInput.value = "";
+          addText(text, getRelativePointerPosition(markerLayer), markerLayer);
+          updateMapMarkers(selectedMap, markerLayer.toJSON());
+          break;
+        case "arrow":
+          const arrowPosition = getRelativePointerPosition(markerLayer);
+          const endPointOffset = 200;
+          const points = [arrowPosition.x - endPointOffset, arrowPosition.y, arrowPosition.x + endPointOffset, arrowPosition.y];
+          addArrow(points, markerLayer);
+          updateMapMarkers(selectedMap, markerLayer.toJSON());
+          break;
+      }
+
+      dragItemType = "";
     }
-    dragItemType = "";
   });
 }
 
 /**
  * @param {{x: number, y:number}} position
+ * @param {string} imageUrl
+ * @param {*} layer - Image layer
  */
-function addImage(position) {
-  addMapImageToLayer(dragItemURL, { x: position.x, y: position.y }, mapOptions.cellSize, mapLayer, (image) => {
-    addEventsToMapImage(image, mapLayer, mapOptions.cellSize, stage, () => {
-      updateMap(selectedMap, mapLayer.toJSON());
+function addImage(position, imageUrl, layer) {
+  addMapImageToLayer(imageUrl, position, mapOptions.cellSize, layer, (image) => {
+    addEventsToMapImage(image, layer, mapOptions.cellSize, stage, () => {
+      updateMap(selectedMap, layer.toJSON());
     });
-    updateMap(selectedMap, mapLayer.toJSON());
   });
 }
 
 /**
- * @param {{x: number, y:number}} position
+ * @param {{x: number;y: number;}} position
+ * @param {string} iconUrl
+ * @param {*} layer - Icon layer
  */
-function addIcon(position) {
-  addMarkerToLayer(dragItemURL, { x: position.x - 35, y: position.y - 35 }, markerLayer, (image) => {
-    addEventsToMapMarker(image, markerLayer, stage, () => {
-      updateMapMarkers(selectedMap, markerLayer.toJSON());
+function addIcon(iconUrl, position, layer) {
+  addMarkerToLayer(iconUrl, position, layer, (image) => {
+    addEventsToMapMarker(image, layer, stage, () => {
+      updateMapMarkers(selectedMap, layer.toJSON());
     });
-    updateMapMarkers(selectedMap, markerLayer.toJSON());
   });
 }
 
 /**
  * @param {string} text
  * @param {{x: number, y:number}} position
+ * @param {*} layer - Text layer
  */
-function addText(text, position) {
+function addText(text, position, layer) {
   if (text) {
-    addTextToLayer(text.toString(), position, markerLayer, (textNode) => {
-      addEventsToMapText(textNode, markerLayer, stage, () => {
-        updateMapMarkers(selectedMap, markerLayer.toJSON());
+    addTextToLayer(text.toString(), position, layer, (textNode) => {
+      addEventsToMapText(textNode, layer, stage, () => {
+        updateMapMarkers(selectedMap, layer.toJSON());
       });
-      updateMapMarkers(selectedMap, markerLayer.toJSON());
     });
   }
 }
 
 /**
- * @param {{x: number, y:number}} position
+ * @param {number[]} points
+ * @param {*} layer - Arrow layer
  */
-function addArrow(position) {
-  let endPointOffset = 200;
-  let points = [position.x - endPointOffset, position.y, position.x + endPointOffset, position.y];
-  addArrowToLayer(points, markerLayer, (objects) => {
-    addEventsToMapArrow(objects, markerLayer, stage, () => {
-      updateMapMarkers(selectedMap, markerLayer.toJSON());
+function addArrow(points, layer) {
+  addArrowToLayer(points, layer, (objects) => {
+    addEventsToMapArrow(objects, layer, stage, () => {
+      updateMapMarkers(selectedMap, layer.toJSON());
     });
-    updateMapMarkers(selectedMap, markerLayer.toJSON());
   });
 }
 
@@ -306,22 +318,21 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
   let newImg = new Image();
   newImg.src = imagePath;
 
-  newImg.onload = function () {
-    // @ts-ignore
-    var image = new Konva.Image({
-      image: newImg,
-      x: position.x,
-      y: position.y,
-      width: cellSize.x,
-      height: cellSize.y,
-      draggable: false,
-    });
+  // @ts-ignore
+  var image = new Konva.Image({
+    image: newImg,
+    x: position.x,
+    y: position.y,
+    width: cellSize.x,
+    height: cellSize.y,
+    draggable: false,
+    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(),
+  });
 
-    layer.add(image);
-    layer.draw();
+  layer.add(image);
+  layer.draw();
 
-    callback && callback(image);
-  };
+  callback && callback(image);
 }
 
 /**
@@ -398,24 +409,21 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
   let newImg = new Image();
   newImg.src = imagePath;
 
-  newImg.onload = function () {
-    // @ts-ignore
-    var image = new Konva.Image({
-      image: newImg,
-      x: position.x,
-      y: position.y,
-      width: 70,
-      height: 70,
-      draggable: false,
-      //imageId: imageId,
-      opacity: 0.8,
-    });
+  // @ts-ignore
+  var image = new Konva.Image({
+    image: newImg,
+    x: position.x,
+    y: position.y,
+    width: 70,
+    height: 70,
+    draggable: false,
+    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(),
+    opacity: 0.8,
+  });
 
-    layer.add(image);
-    layer.draw();
-
-    callback && callback(image);
-  };
+  layer.add(image);
+  layer.draw();
+  callback && callback(image);
 }
 
 /**
@@ -427,7 +435,7 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
  * @param {Function} onChange -Callback for image deletion
  */
 function addEventsToMapMarker(image, layer, stage, onChange) {
-  image.on("dragend", function () {
+  image.on("dragend", () => {
     layer.batchDraw();
 
     onChange && onChange();
@@ -448,18 +456,27 @@ function addEventsToMapMarker(image, layer, stage, onChange) {
     // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete image
-      if (window.confirm("Delete marker?")) {
-        image.destroy();
-        layer.draw();
+      // @ts-ignore
+      window.electronAPI.dialog
+        .confirm({
+          message: "Delete marker?",
+          buttons: ["Yes", "No"],
+          type: "question",
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            image.destroy();
+            layer.draw();
 
-        onChange && onChange();
-      }
+            onChange && onChange();
+          }
+        });
     }
   });
-  image.on("mouseenter", function () {
+  image.on("mouseenter", () => {
     stage.container().style.cursor = "move";
   });
-  image.on("mouseleave", function () {
+  image.on("mouseleave", () => {
     stage.container().style.cursor = "default";
   });
 }
@@ -505,7 +522,7 @@ function addTextToLayer(text, position, layer, callback) {
  * @param {Function} onChange -Callback for image deletion
  */
 function addEventsToMapText(textNode, layer, stage, onChange) {
-  textNode.on("dragend", function () {
+  textNode.on("dragend", () => {
     layer.batchDraw();
 
     onChange && onChange();
@@ -526,18 +543,27 @@ function addEventsToMapText(textNode, layer, stage, onChange) {
     // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete text
-      if (window.confirm("Delete text?")) {
-        textNode.destroy();
-        layer.draw();
+      // @ts-ignore
+      window.electronAPI.dialog
+        .confirm({
+          message: "Delete text?",
+          buttons: ["Yes", "No"],
+          type: "question",
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            textNode.destroy();
+            layer.draw();
 
-        onChange && onChange();
-      }
+            onChange && onChange();
+          }
+        });
     }
   });
-  textNode.on("mouseenter", function () {
+  textNode.on("mouseenter", () => {
     stage.container().style.cursor = "move";
   });
-  textNode.on("mouseleave", function () {
+  textNode.on("mouseleave", () => {
     stage.container().style.cursor = "default";
   });
 }
@@ -686,15 +712,24 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
     // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete arrow
-      if (window.confirm("Delete arrow?")) {
-        arrowObjects.arrow.destroy();
-        arrowObjects.arrowStroke.destroy();
-        arrowObjects.startCircle.destroy();
-        arrowObjects.endCircle.destroy();
-        layer.batchDraw();
+      // @ts-ignore
+      window.electronAPI.dialog
+        .confirm({
+          message: "Delete arrow?",
+          buttons: ["Yes", "No"],
+          type: "question",
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            arrowObjects.arrow.destroy();
+            arrowObjects.arrowStroke.destroy();
+            arrowObjects.startCircle.destroy();
+            arrowObjects.endCircle.destroy();
+            layer.batchDraw();
 
-        onChange && onChange();
-      }
+            onChange && onChange();
+          }
+        });
     }
   });
   arrowObjects.endCircle.on("dragend", () => {
@@ -723,30 +758,48 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
     // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete arrow
-      if (window.confirm("Delete arrow?")) {
-        arrowObjects.arrow.destroy();
-        arrowObjects.arrowStroke.destroy();
-        arrowObjects.startCircle.destroy();
-        arrowObjects.endCircle.destroy();
-        layer.batchDraw();
+      // @ts-ignore
+      window.electronAPI.dialog
+        .confirm({
+          message: "Delete arrow?",
+          buttons: ["Yes", "No"],
+          type: "question",
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            arrowObjects.arrow.destroy();
+            arrowObjects.arrowStroke.destroy();
+            arrowObjects.startCircle.destroy();
+            arrowObjects.endCircle.destroy();
+            layer.batchDraw();
 
-        onChange && onChange();
-      }
+            onChange && onChange();
+          }
+        });
     }
   });
   arrowObjects.arrow.on("mousedown", (e) => {
     // 2: right mouse button
     if (e.evt.button === 2) {
       // Delete arrow
-      if (window.confirm("Delete arrow?")) {
-        arrowObjects.arrow.destroy();
-        arrowObjects.arrowStroke.destroy();
-        arrowObjects.startCircle.destroy();
-        arrowObjects.endCircle.destroy();
-        layer.batchDraw();
+      // @ts-ignore
+      window.electronAPI.dialog
+        .confirm({
+          message: "Delete arrow?",
+          buttons: ["Yes", "No"],
+          type: "question",
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            arrowObjects.arrow.destroy();
+            arrowObjects.arrowStroke.destroy();
+            arrowObjects.startCircle.destroy();
+            arrowObjects.endCircle.destroy();
+            layer.batchDraw();
 
-        onChange && onChange();
-      }
+            onChange && onChange();
+          }
+        });
     }
   });
   arrowObjects.startCircle.on("mouseenter", function () {
@@ -794,57 +847,71 @@ function getRelativePointerPosition(node) {
   return transform.point(pos);
 }
 
-// // Saving and loading functions -----------------------------------------
+/**
+ * Load map images to stage
+ * @param {string} mapName -Name of the map
+ */
+function loadMap(mapName) {
+  // @ts-ignore
+  var newMapLayer = new Konva.Layer();
+  // @ts-ignore
+  var newMarkerlayer = new Konva.Layer();
 
-// /**
-//  * Load map images to stage
-//  *
-//  * @param {string} mapName -Name of the map
-//  */
-// function loadMap(mapName) {
-//   if (mapName === "") {
-//     return alert("No map selected");
-//   }
-//   let mapPath = mapJSONFolder + mapName + ".json";
-//   // Get new map's layer
-//   let newMapLayer = mapDrawing.loadMapLayerFromJSON(
-//     mapPath,
-//     stage,
-//     {
-//       mapImageFolderPath: mapScreenshotFolder,
-//       cellSize: cellSize,
-//     },
-//     () => {
-//       saveMap(mapName);
-//     }
-//   );
-//   // Change the old map layer to new layer
-//   mapLayer.destroy();
-//   mapLayer = newMapLayer;
-//   // Add the new layer to stage
-//   stage.add(newMapLayer);
-//   // Move the new mapLayer under icon layer
-//   mapLayer.moveDown();
-// }
+  if (mapName) {
+    // @ts-ignore
+    window.electronAPI.map
+      .getByName(mapName)
+      .then(async ({ map, markers }) => {
+        // @ts-ignore
+        let mapImageFolderPath = await window.electronAPI.path.mapScreenshotFolder();
 
-// /**
-//  * Load map's marker layer
-//  *
-//  * @param {string} mapName - Name of the map of which marker's will be loaded
-//  */
-// function loadMapMarkers(mapName) {
-//   if (mapName === "") {
-//     return alert("No map selected");
-//   }
-//   let markersPath = mapMarkersJSONFolder + mapName + "-markers.json";
-//   let newMarkerLayer = mapDrawing.loadMapMarkerLayerFromJSON(markersPath, stage, mapMarkerIconFolder, () => {
-//     saveMapMarkers(mapName);
-//   });
-//   // Change the old layer to new one
-//   markerLayer.destroy();
-//   markerLayer = newMarkerLayer;
-//   // Add new marker layer to stage
-//   stage.add(newMarkerLayer);
-//   // Move marker layer to top
-//   markerLayer.moveToTop();
-// }
+        map.children?.forEach((child) => {
+          addMapImageToLayer(mapImageFolderPath + child.attrs.imageId + ".png", { x: child.attrs.x, y: child.attrs.y }, mapOptions.cellSize, newMapLayer, (image) => {
+            addEventsToMapImage(image, newMapLayer, mapOptions.cellSize, stage, () => {
+              updateMap(mapName, newMapLayer.toJSON());
+            });
+          });
+        });
+
+        // @ts-ignore
+        let mapIconFolderPath = await window.electronAPI.path.mapIconFolder();
+
+        markers?.children?.forEach((child) => {
+          switch (child.className) {
+            case "Image":
+              addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+              break;
+            case "Text":
+              addText(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+              break;
+            case "Arrow":
+              if (child.attrs.type === "Arrow") {
+                const points = [child.attrs.points[0], child.attrs.points[1], child.attrs.points[2], child.attrs.points[3]];
+                addArrow(points, newMarkerlayer);
+              }
+              break;
+          }
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        return;
+      });
+  }
+
+  // Change the old layers to new layers
+  mapLayer.destroy();
+  markerLayer.destroy();
+
+  mapLayer = newMapLayer;
+  markerLayer = newMarkerlayer;
+
+  // Add the new layer to stage
+  stage.add(newMapLayer);
+  stage.add(newMarkerlayer);
+
+  // Move the new mapLayer under icon layer
+  mapLayer.moveDown();
+  markerLayer.moveToTop();
+  gridLayer.moveToBottom();
+}

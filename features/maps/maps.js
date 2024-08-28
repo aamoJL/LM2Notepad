@@ -10,7 +10,7 @@ const screenCapture = require("../screenCapture/screenCapture.js");
 const mapScreenshotFolder = path.join(process.resourcesPath, "/screenshots/map/");
 const mapsFolder = path.join(process.resourcesPath, "/maps/");
 const mapMarkersFolder = path.join(process.resourcesPath, "/maps/markers/");
-// const mapMarkerIconFolder = path.join(__dirname, "/icons/"); // Path to icons
+const mapIconFolder = path.join(process.cwd(), "/icons/");
 
 /**
  * Creates window for maps
@@ -40,6 +40,10 @@ function createWindow() {
     return mapScreenshotFolder;
   });
 
+  ipcMain.handle("get-map-icon-path", () => {
+    return mapIconFolder;
+  });
+
   ipcMain.handle("get-screenshots", () => {
     return getScreenshots();
   });
@@ -58,6 +62,10 @@ function createWindow() {
 
   ipcMain.handle("get-maps", () => {
     return getMaps();
+  });
+
+  ipcMain.handle("get-map", (_e, name) => {
+    return getMap(name);
   });
 
   ipcMain.handle("add-map", (_e, name) => {
@@ -181,9 +189,32 @@ function getMaps() {
     fs.readdir(mapsFolder, (err, dir) => {
       if (err) reject(err);
 
-      var fileNames = Array.from(dir, (x) => path.parse(x).name);
+      var fileNames = Array.from(
+        dir.filter((x) => x.includes(".json")),
+        (x) => path.parse(x).name
+      );
       resolve(fileNames);
     });
+  });
+}
+
+/**
+ * Returns map data
+ * @param {string} name
+ */
+function getMap(name) {
+  return new Promise((resolve, reject) => {
+    try {
+      let mapDataPath = path.join(mapsFolder, name + ".json");
+      let mapMarkerDataPath = path.join(mapMarkersFolder, name + "-markers.json");
+
+      let mapJson = JSON.parse(fs.readFileSync(mapDataPath, "utf8"));
+      let markerJson = fs.existsSync(mapMarkerDataPath) ? JSON.parse(fs.readFileSync(mapMarkerDataPath, "utf8")) : null;
+
+      resolve({ map: mapJson, markers: markerJson });
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -253,13 +284,16 @@ function updateMap(name, json) {
  */
 function deleteMap(name) {
   return new Promise((resolve, reject) => {
-    const path = mapsFolder + name + ".json";
-    if (fs.existsSync(path)) {
-      fs.unlinkSync(path);
+    const mapPath = mapsFolder + name + ".json";
+    const markersPath = mapMarkersFolder + name + "-markers.json";
+
+    if (fs.existsSync(mapPath)) {
+      fs.unlinkSync(mapPath);
+
+      if (fs.existsSync(markersPath)) fs.unlinkSync(markersPath);
+
       resolve(true);
     } else reject("Map not found");
-
-    // TODO: markers
   });
 }
 
@@ -269,6 +303,11 @@ function deleteMap(name) {
  * @param {string} json - Marker data
  */
 function updateMapMarkers(name, json) {
+  if (!fs.existsSync(mapMarkersFolder)) {
+    fs.mkdirSync(mapMarkersFolder);
+    console.log("Map marker folder created");
+  }
+
   return new Promise((resolve, reject) => {
     if (name.trim().length === 0) {
       reject("Name is invalid");

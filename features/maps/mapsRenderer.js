@@ -46,7 +46,7 @@ document.getElementById("new-map-button")?.addEventListener("click", (e) => {
   if (mapName) {
     addMap(mapName)
       .then((name) => {
-        prependMapToContainer(name);
+        insertMapToContainer(name);
 
         if (selectedMap !== name) selectMap(name);
 
@@ -117,9 +117,13 @@ function refreshMapList() {
   window.electronAPI.map
     .get()
     .then((maps) => {
+      maps = maps.sort();
       maps.forEach((map) => {
-        prependMapToContainer(map);
+        insertMapToContainer(map);
       });
+      if (maps.length > 0) {
+        selectMap(maps[0]);
+      }
     })
     .catch((err) => console.error(err));
 }
@@ -233,7 +237,7 @@ function prependScreenshotToContainer(screenshotName, screenshotFolder) {
  * Prepends map element to the map container
  * @param {string} name
  */
-function prependMapToContainer(name) {
+function insertMapToContainer(name) {
   let mapLinkContainer = document.getElementById("map-link-list");
 
   let button = document.createElement("button");
@@ -244,6 +248,16 @@ function prependMapToContainer(name) {
   button.addEventListener("click", () => {
     selectMap(name);
   });
+
+  // Maps are listed in alphabetical order
+  // @ts-ignore
+  let index = [...mapLinkContainer?.children].findIndex((x) => x.innerText >= name);
+
+  if (index > -1) {
+    mapLinkContainer?.insertBefore(button, mapLinkContainer.childNodes[index]);
+  } else {
+    mapLinkContainer?.append(button);
+  }
 
   button.addEventListener("contextmenu", () => {
     // @ts-ignore
@@ -263,15 +277,6 @@ function prependMapToContainer(name) {
         }
       });
   });
-
-  // @ts-ignore
-  let index = [...mapLinkContainer?.children].findIndex((x) => x.innerText >= name);
-
-  if (index > -1) {
-    mapLinkContainer?.insertBefore(button, mapLinkContainer.childNodes[index]);
-  } else {
-    mapLinkContainer?.append(button);
-  }
 }
 
 /**
@@ -292,13 +297,10 @@ function selectMap(name) {
       Array.from(mapLinkContainer.querySelectorAll("button"))
         .find((x) => x.innerText === name)
         ?.classList.add("active");
-      // TODO: load map
-      //   if (mapName !== "") {
-      //     loadMap(mapName);
-      //     loadMapMarkers(mapName);
-      //   }
     }
   }
+
+  loadMap(selectedMap);
 }
 
 /**
