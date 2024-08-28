@@ -773,8 +773,8 @@ function addEventsToMapArrow(arrowObjects, layer, stage, onChange) {
  */
 function alignPositionToGrid(position, cellSize) {
   return {
-    x: Math.trunc(position.x / cellSize.x) * cellSize.x,
-    y: Math.trunc(position.y / cellSize.y) * cellSize.y,
+    x: position.x > 0 ? Math.trunc(position.x / cellSize.x) * cellSize.x : Math.trunc(Math.floor(position.x / cellSize.x)) * cellSize.x,
+    y: position.y > 0 ? Math.trunc(position.y / cellSize.y) * cellSize.y : Math.trunc(Math.floor(position.y / cellSize.y)) * cellSize.y,
   };
 }
 
