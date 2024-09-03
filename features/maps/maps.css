@@ -1,11 +1,42 @@
-body {
-  overflow-y: hidden;
+#grid-container {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: min-content auto;
+  grid-template-columns: 200px auto 220px;
+  grid-template-areas:
+    "source source source"
+    "screenshots canvas maps";
+  gap: 0.5rem 0.5rem;
 }
 
-.screenshot-list-container {
-  height: 600px;
-  overflow-y: auto;
+.ga-source {
+  grid-area: source;
 }
+
+.ga-screenshots {
+  grid-area: screenshots;
+}
+
+.ga-canvas {
+  grid-area: canvas;
+}
+
+.ga-maps {
+  grid-area: maps;
+}
+
+#source-combobox {
+  max-width: 400px;
+}
+
+#map-screenshot-list {
+  overflow: auto;
+}
+
+/* .invisible-scroll::-webkit-scrollbar {
+  display: none;
+} */
 
 #stage-parent {
   width: 100%;
@@ -21,17 +52,8 @@ body {
   height: 50px;
 }
 
-.width-50 {
-  width: 50px;
-}
-
 .map-text-container .map-icon {
   margin-right: 0px;
-}
-
-.remove-right-radius {
-  border-bottom-right-radius: 0;
-  border-top-right-radius: 0;
 }
 
 .img-center {

@@ -12,7 +12,14 @@ window.addEventListener("load", async () => {
 
   await refreshSourceList();
   refreshScreenshotList();
-  refreshMapList();
+  await refreshMapList();
+
+  // Select first map if exists
+  // @ts-ignore
+  var initMaps = await window.electronAPI.map.get();
+  if (initMaps?.length > 0) {
+    selectMap(initMaps.sort()[0]);
+  }
 });
 
 document.getElementById("refresh-sources-list-button")?.addEventListener("click", async () => {
@@ -112,20 +119,16 @@ function refreshScreenshotList() {
 /**
  * Appends map buttons to map list
  */
-function refreshMapList() {
+async function refreshMapList() {
   // @ts-ignore
-  window.electronAPI.map
-    .get()
-    .then((maps) => {
-      maps = maps.sort();
-      maps.forEach((map) => {
-        insertMapToContainer(map);
-      });
-      if (maps.length > 0) {
-        selectMap(maps[0]);
-      }
-    })
-    .catch((err) => console.error(err));
+  var maps = await window.electronAPI.map.get();
+
+  if (maps) {
+    maps = maps.sort();
+    maps.forEach((map) => {
+      insertMapToContainer(map);
+    });
+  }
 }
 
 /**
@@ -201,7 +204,7 @@ function prependScreenshotToContainer(screenshotName, screenshotFolder) {
   if (screenshotList) {
     let img = document.createElement("img");
     img.src = screenshotPath;
-    img.classList.add("img-thumbnail", "mb-3");
+    img.classList.add("pb-1", "pt-1", "mw-100");
     img.id = "screenshot-" + screenshotName;
     img.setAttribute("draggable", "true");
 
@@ -243,7 +246,7 @@ function insertMapToContainer(name) {
   let button = document.createElement("button");
   button.type = "button";
   button.classList.add("list-group-item", "list-group-item-action");
-  button.innerText = escapeHtml(name);
+  button.innerText = name;
 
   button.addEventListener("click", () => {
     selectMap(name);
@@ -269,8 +272,15 @@ function insertMapToContainer(name) {
       })
       .then((res) => {
         if (res.response === 0) {
-          deleteMap(name).then(() => {
-            if (selectedMap === name) selectMap("");
+          deleteMap(name).then(async () => {
+            if (selectedMap === name) {
+              // Select first map
+              // @ts-ignore
+              var initMaps = await window.electronAPI.map.get();
+              if (initMaps?.length > 0) {
+                selectMap(initMaps.sort()[0]);
+              } else selectMap("");
+            }
 
             mapLinkContainer?.removeChild(button);
           });

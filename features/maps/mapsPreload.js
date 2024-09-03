@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     },
   },
   path: {
+    exists: (path) => ipcRenderer.invoke("path-exists", path),
     mapScreenshotFolder: () => ipcRenderer.invoke("get-map-screenshot-path"),
     mapIconFolder: () => ipcRenderer.invoke("get-map-icon-path"),
   },

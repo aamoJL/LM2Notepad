@@ -44,6 +44,10 @@ function createWindow() {
     return mapIconFolder;
   });
 
+  ipcMain.handle("path-exists", (_e, path) => {
+    return pathExists(path);
+  });
+
   ipcMain.handle("get-screenshots", () => {
     return getScreenshots();
   });
@@ -85,12 +89,19 @@ function createWindow() {
   });
 
   ipcMain.on("show-dialog", (_e, options) => {
-    dialog.showMessageBox(win, options);
+    showDialog(win, options);
   });
 
   ipcMain.handle("confirm-dialog", (_e, options) => {
-    return dialog.showMessageBox(win, options);
+    return showDialog(win, options);
   });
+}
+
+/**
+ * @param {string} path
+ */
+function pathExists(path) {
+  return fs.existsSync(path);
 }
 
 /**
@@ -326,6 +337,15 @@ function updateMapMarkers(name, json) {
       }
     });
   });
+}
+
+/**
+ * @param {BrowserWindow} win
+ * @param {Electron.MessageBoxOptions} options
+ * @returns
+ */
+function showDialog(win, options) {
+  return dialog.showMessageBox(win, options);
 }
 
 module.exports = {

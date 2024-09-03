@@ -213,14 +213,14 @@ function addDropEvents() {
   stageContainer.addEventListener("dragover", (e) => {
     e.preventDefault();
   });
-  stageContainer.addEventListener("drop", (e) => {
+  stageContainer.addEventListener("drop", async (e) => {
     e.preventDefault();
     stage.setPointersPositions(e);
 
     if (dragItemType) {
       switch (dragItemType) {
         case "image":
-          addImage(alignPositionToGrid(getRelativePointerPosition(mapLayer), mapOptions.cellSize), dragItemURL, mapLayer);
+          await addImage(alignPositionToGrid(getRelativePointerPosition(mapLayer), mapOptions.cellSize), dragItemURL, mapLayer);
           updateMap(selectedMap, mapLayer.toJSON());
           break;
         case "icon":
@@ -257,12 +257,17 @@ function addDropEvents() {
  * @param {string} imageUrl
  * @param {*} layer - Image layer
  */
-function addImage(position, imageUrl, layer) {
-  addMapImageToLayer(imageUrl, position, mapOptions.cellSize, layer, (image) => {
-    addEventsToMapImage(image, layer, mapOptions.cellSize, stage, () => {
-      updateMap(selectedMap, layer.toJSON());
+async function addImage(position, imageUrl, layer) {
+  // @ts-ignore
+  var exits = await window.electronAPI.path.exists(imageUrl);
+
+  if (exits) {
+    addMapImageToLayer(imageUrl, position, mapOptions.cellSize, layer, (image) => {
+      addEventsToMapImage(image, layer, mapOptions.cellSize, stage, () => {
+        updateMap(selectedMap, layer.toJSON());
+      });
     });
-  });
+  } else console.error("Image was not found: " + imageUrl);
 }
 
 /**
@@ -326,7 +331,7 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
     width: cellSize.x,
     height: cellSize.y,
     draggable: false,
-    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(),
+    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(), // get file name
   });
 
   layer.add(image);
@@ -417,7 +422,7 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
     width: 70,
     height: 70,
     draggable: false,
-    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(),
+    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(), // get file name
     opacity: 0.8,
   });
 
@@ -866,11 +871,7 @@ function loadMap(mapName) {
         let mapImageFolderPath = await window.electronAPI.path.mapScreenshotFolder();
 
         map.children?.forEach((child) => {
-          addMapImageToLayer(mapImageFolderPath + child.attrs.imageId + ".png", { x: child.attrs.x, y: child.attrs.y }, mapOptions.cellSize, newMapLayer, (image) => {
-            addEventsToMapImage(image, newMapLayer, mapOptions.cellSize, stage, () => {
-              updateMap(mapName, newMapLayer.toJSON());
-            });
-          });
+          addImage({ x: child.attrs.x, y: child.attrs.y }, mapImageFolderPath + child.attrs.imageId + ".png", newMapLayer);
         });
 
         // @ts-ignore
