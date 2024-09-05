@@ -1,30 +1,37 @@
-body {
-  overflow-y: hidden;
+#grid-container {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: min-content auto;
+  grid-template-columns: 200px auto;
+  grid-template-areas:
+    "source source"
+    "inputs notes";
+  gap: 0.5rem 0.5rem;
 }
 
-.json-text-container {
-  height: 600px;
-  overflow-y: auto;
+.ga-source {
+  grid-area: source;
 }
 
-.remove-bottom-radius {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+.ga-inputs {
+  grid-area: inputs;
 }
 
-.remove-top-radius {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+.ga-notes {
+  grid-area: notes;
 }
 
-.remove-left-radius {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+#source-combobox {
+  max-width: 400px;
 }
 
-.remove-right-radius {
-  border-bottom-right-radius: 0;
-  border-top-right-radius: 0;
+.filter-black {
+  filter: brightness(0);
+}
+
+#crop-toggle {
+  filter: brightness(150%);
 }
 
 .img-center {

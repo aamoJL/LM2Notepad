@@ -94,6 +94,19 @@ document.getElementById("add-note-button")?.addEventListener("click", () => {
       .catch((err) => console.error(err));
   }
 });
+document.getElementById("crop-toggle")?.addEventListener("click", () => {
+  var toggle = document.getElementById("crop-toggle");
+
+  if (toggle) {
+    var wasChecked = toggle.hasAttribute("checked");
+
+    wasChecked ? toggle.removeAttribute("checked") : toggle.setAttribute("checked", "");
+    wasChecked ? toggle.classList?.remove("active") : toggle.classList?.add("active");
+
+    var cropIcon = document.getElementById("crop-icon");
+    wasChecked ? cropIcon?.classList.add("filter-black") : cropIcon?.classList.remove("filter-black");
+  }
+});
 
 /**
  * Get all available window names and add them to dropdown list
@@ -128,7 +141,7 @@ async function refreshSourceList() {
 async function refreshNoteList() {
   // @ts-ignore
   const notes = await window.electronAPI.note.get();
-  const container = document.getElementById("json-text-container");
+  const container = document.getElementById("notes-container");
   // @ts-ignore
   const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
 
@@ -222,7 +235,7 @@ async function scanScreenshot(buffer) {
  * @param {number} id
  */
 async function prependNoteToContainer(text, screenshotPath, id) {
-  const container = document.getElementById("json-text-container");
+  const container = document.getElementById("notes-container");
   const cardElement = createNoteCardElement(text, screenshotPath, id);
 
   if (cardElement && container) {
@@ -230,8 +243,19 @@ async function prependNoteToContainer(text, screenshotPath, id) {
     addButtonEventsToCardElement(id, {
       onRemove: async () => {
         // @ts-ignore
-        var response = await window.electronAPI.note.delete(id);
-        if (response === true) container.removeChild(cardElement);
+        window.electronAPI.dialog
+          .confirm({
+            message: "Delete note?",
+            buttons: ["Yes", "No"],
+            type: "question",
+          })
+          .then(async (res) => {
+            if (res.response === 0) {
+              // @ts-ignore
+              var response = await window.electronAPI.note.delete(id);
+              if (response === true) container.removeChild(cardElement);
+            }
+          });
       },
       onUpdate: async (text) => {
         // @ts-ignore
@@ -259,13 +283,10 @@ async function prependNoteToContainer(text, screenshotPath, id) {
 function createNoteCardElement(text, screenshotPath, id) {
   const iconPath = "../../icons";
 
-  const templateData = `<div class="card mb-3" id="note-container-${id}">
+  const templateData = `<div class="card mb-1 rounded-0" id="note-container-${id}">
   <div class="row no-gutters">
     <div class="col-md-7">
-      <img
-        src="${screenshotPath}"
-        class="card-img remove-right-radius"
-      />
+      <img src="${screenshotPath}" class="card-img rounded-0" />
     </div>
     <div class="col-md-5 d-flex">
       <div class="card-body flex-column d-flex">
@@ -273,23 +294,25 @@ function createNoteCardElement(text, screenshotPath, id) {
           ${escapeHtml(text)}
         </div>
         <textarea
-          class="form-control flex-grow-1 mb-3 d-none"
+          class="form-control flex-grow-1 mb-3 d-none resize-none rounded-0"
           name="card-text"
           id="card-textarea-${id}">${escapeHtml(text)}</textarea>
         <div class="d-flex">
           <div class="flex-grow-1">
-          <button class="btn btn-primary btn-sm" id="edit-button-${id}" data-toggle="tooltip" title="Edit">
+            <button class="btn btn-secondary btn-sm" id="edit-button-${id}" title="Edit">
               <img src="${iconPath}/edit.svg" alt="edit note" />
             </button>
-            <button class="btn btn-warning btn-sm d-none" id="cancel-button-${id}" data-toggle="tooltip" title="Cancel">
-              <img src="${iconPath}/cancel.svg" alt="cancel note changes" />
-            </button>
-            <button class="btn btn-success btn-sm d-none" id="save-button-${id}" data-toggle="tooltip" title="Save">
-            <img src="${iconPath}/save.svg" alt="save note changes" />
-            </button>
+            <div class="btn-group">
+              <button class="btn btn-warning btn-sm d-none" id="cancel-button-${id}" title="Cancel">
+                <img src="${iconPath}/cancel.svg" alt="cancel note changes" />
+              </button>
+              <button class="btn btn-success btn-sm d-none" id="save-button-${id}" title="Save">
+                <img src="${iconPath}/save.svg" alt="save note changes" />
+              </button>
+            </div>
           </div>
           <div class="align-self-end">
-            <button class="btn btn-danger btn-sm" id="remove-card-button-${id}" data-toggle="tooltip" title="Delete">
+            <button class="btn btn-danger btn-sm" id="remove-card-button-${id}" title="Delete">
             <img src="${iconPath}/delete.svg" alt="delete note" />
             </button>
           </div>

@@ -13,3 +13,42 @@
 .border-left {
   border-left: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important;
 }
+
+.brb-0 {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.brt-0 {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.brl-0 {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.brr-0 {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.resize-none {
+  resize: none;
+}
+
+.invisible-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+
+  > .col,
+  > [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}

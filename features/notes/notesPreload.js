@@ -22,4 +22,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   path: {
     noteScreenshotFolder: () => ipcRenderer.invoke("get-note-screenshot-path"),
   },
+  dialog: {
+    confirm: (options) => ipcRenderer.invoke("confirm-dialog", options),
+  },
 });

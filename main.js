@@ -4,8 +4,8 @@ const { createWindow: createMapsWindow } = require("./features/maps/maps.js");
 const { getSources } = require("./features/screenCapture/screenCapture.js");
 
 app.whenReady().then(() => {
-  //createNotesWindow();
-  createMapsWindow();
+  createNotesWindow();
+  // createMapsWindow();
 
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {

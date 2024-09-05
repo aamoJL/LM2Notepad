@@ -2,7 +2,7 @@
  * Main process for notes window
  */
 
-const { BrowserWindow, globalShortcut, ipcMain } = require("electron/main");
+const { BrowserWindow, globalShortcut, ipcMain, dialog } = require("electron/main");
 const path = require("node:path");
 const fs = require("fs");
 const screenCapture = require("../screenCapture/screenCapture.js");
@@ -70,6 +70,10 @@ function createWindow() {
         win.webContents.postMessage("scan-progress-update", (log.progress * 100).toFixed(0));
       }
     });
+  });
+
+  ipcMain.handle("confirm-dialog", (_e, options) => {
+    return showDialog(win, options);
   });
 }
 
@@ -243,6 +247,15 @@ function takeScreenshot(source, crop) {
  */
 function scanScreenshot(buffer, logger) {
   return scanImage(buffer, logger);
+}
+
+/**
+ * @param {BrowserWindow} win
+ * @param {Electron.MessageBoxOptions} options
+ * @returns
+ */
+function showDialog(win, options) {
+  return dialog.showMessageBox(win, options);
 }
 
 module.exports = {
