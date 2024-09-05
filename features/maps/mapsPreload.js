@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   screenshot: {
     getSources: () => ipcRenderer.invoke("get-sources"),
     get: () => ipcRenderer.invoke("get-screenshots"),
-    take: (source) => ipcRenderer.invoke("take-screenshot", source),
+    take: (source) => ipcRenderer.invoke("maps:take-screenshot", source),
     add: (buffer) => ipcRenderer.invoke("add-screenshot", buffer),
     delete: (name) => ipcRenderer.invoke("delete-screenshot", name),
   },
@@ -28,6 +28,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   dialog: {
     show: (options) => ipcRenderer.send("show-dialog", options),
-    confirm: (options) => ipcRenderer.invoke("confirm-dialog", options),
+    confirm: (options) => ipcRenderer.invoke("maps:confirm-dialog", options),
   },
 });

@@ -52,7 +52,7 @@ function createWindow() {
     return getScreenshots();
   });
 
-  ipcMain.handle("take-screenshot", (_e, source) => {
+  ipcMain.handle("maps:take-screenshot", (_e, source) => {
     return takeScreenshot(source);
   });
 
@@ -92,7 +92,7 @@ function createWindow() {
     showDialog(win, options);
   });
 
-  ipcMain.handle("confirm-dialog", (_e, options) => {
+  ipcMain.handle("maps:confirm-dialog", (_e, options) => {
     return showDialog(win, options);
   });
 }

@@ -60,7 +60,7 @@ function createWindow() {
     return updateNote(id, text);
   });
 
-  ipcMain.handle("take-screenshot", (_e, args) => {
+  ipcMain.handle("notes:take-screenshot", (_e, args) => {
     return takeScreenshot(args.source, args.crop);
   });
 
@@ -72,7 +72,7 @@ function createWindow() {
     });
   });
 
-  ipcMain.handle("confirm-dialog", (_e, options) => {
+  ipcMain.handle("notes:confirm-dialog", (_e, options) => {
     return showDialog(win, options);
   });
 }

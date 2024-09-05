@@ -5,7 +5,7 @@ const { getSources } = require("./features/screenCapture/screenCapture.js");
 
 app.whenReady().then(() => {
   createNotesWindow();
-  // createMapsWindow();
+  createMapsWindow();
 
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {

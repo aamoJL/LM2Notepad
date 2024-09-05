@@ -26,7 +26,7 @@ document.getElementById("refresh-sources-list-button")?.addEventListener("click"
 document.getElementById("screenshot-button")?.addEventListener("click", () => {
   // Crop thumbnail if cropping is selected
   // @ts-ignore
-  let crop = document.getElementById("crop-toggle")?.checked ?? false;
+  let crop = document.getElementById("crop-toggle")?.hasAttribute("checked") ?? false;
   // @ts-ignore
   let sourceName = document.getElementById("screenshot-source-list")?.value ?? "";
 
