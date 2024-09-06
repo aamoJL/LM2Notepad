@@ -1,0 +1,44 @@
+#grid-container {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: min-content auto;
+  grid-template-columns: 200px auto;
+  grid-template-areas:
+    "source source"
+    "inputs notes";
+  gap: 0.5rem 0.5rem;
+}
+
+.ga-source {
+  grid-area: source;
+}
+
+.ga-inputs {
+  grid-area: inputs;
+}
+
+.ga-notes {
+  grid-area: notes;
+}
+
+#source-combobox {
+  max-width: 400px;
+}
+
+.filter-black {
+  filter: brightness(0);
+}
+
+#crop-toggle {
+  filter: brightness(150%);
+}
+
+.img-center {
+  display: flex;
+  height: 1.2em;
+}
+
+.progress-bar {
+  width: 100%;
+}

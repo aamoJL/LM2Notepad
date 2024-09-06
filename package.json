@@ -12,15 +12,12 @@
   "author": "Joni Laukka",
   "license": "ISC",
   "dependencies": {
-    "bootstrap": "^4.3.1",
-    "jquery": "^3.4.1",
-    "konva": "^4.0.0",
-    "popper.js": "^1.16.0",
-    "tesseract.js": "^1.0.19"
+    "bootstrap": "^5.3.3",
+    "tesseract.js": "^5.1.0"
   },
   "devDependencies": {
-    "electron-builder": "^20.39.0",
-    "electron": "^4.1.0"
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3"
   },
   "description": "",
   "build": {

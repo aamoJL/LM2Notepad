@@ -1,32 +1,23 @@
-const { app, BrowserWindow } = require("electron");
+const { app, globalShortcut, ipcMain } = require("electron/main");
+const { createWindow: createNotesWindow } = require("./features/notes/notes.js");
+const { createWindow: createMapsWindow } = require("./features/maps/maps.js");
+const { getSources } = require("./features/screenCapture/screenCapture.js");
 
-function createWindow(resolution, file) {
-  let win = new BrowserWindow({
-    width: resolution.width,
-    height: resolution.height
+app.whenReady().then(() => {
+  createNotesWindow();
+  createMapsWindow();
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
   });
 
-  win.loadFile(file);
-
-  win.on("closed", () => {
-    win = null;
+  app.on("will-quit", () => {
+    globalShortcut.unregisterAll();
   });
-}
 
-app.on("ready", () => {
-  // Notes
-  createWindow({ width: 1200, height: 750 }, "notes.html");
-  // Map
-  createWindow({ width: 1800, height: 880 }, "map.html");
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
-
-app.on("will-quit", () => {
-  // Unregister all shortcuts.
-  globalShortcut.unregisterAll();
+  ipcMain.handle("get-sources", () => {
+    return getSources();
+  });
 });

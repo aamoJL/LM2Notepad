@@ -1,0 +1,46 @@
+#grid-container {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: min-content auto;
+  grid-template-columns: 200px auto 220px;
+  grid-template-areas:
+    "source source source"
+    "screenshots canvas maps";
+  gap: 0.5rem 0.5rem;
+}
+
+.ga-source {
+  grid-area: source;
+}
+
+.ga-screenshots {
+  grid-area: screenshots;
+}
+
+.ga-canvas {
+  grid-area: canvas;
+}
+
+.ga-maps {
+  grid-area: maps;
+}
+
+#source-combobox {
+  max-width: 400px;
+}
+
+#mapContainer {
+  width: 50px;
+  height: 50px;
+}
+
+.map-icon {
+  width: 50px;
+  margin-right: 0.25rem;
+}
+
+.img-center {
+  display: flex;
+  height: 1.2em;
+}

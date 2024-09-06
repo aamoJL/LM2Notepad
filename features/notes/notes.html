@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Notes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self'; 
+        script-src 'self'; 
+        img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="..\..\node_modules\bootstrap\dist\css\bootstrap.min.css" />
+    <link rel="stylesheet" href="notes.css" />
+    <link rel="stylesheet" href="../../main.css" />
+  </head>
+  <body class="overflow-hidden">
+    <div class="d-grid p-2" id="grid-container">
+      <div class="ga-source" id="source-combobox">
+        <label>Select captured window</label>
+        <div class="input-group">
+          <select class="form-control rounded-0" id="screenshot-source-list"></select>
+          <button class="btn btn-secondary" id="refresh-sources-list-button" title="Refresh source list">
+            <img class="img-center" src="../../icons/refresh.svg" alt="refresh the source list" />
+          </button>
+        </div>
+      </div>
+
+      <div class="ga-inputs">
+        <div class="d-flex flex-column mb-2">
+          <textarea class="form-control rounded-0 resize-none" id="note-text-input" rows="4" placeholder="write a note..."></textarea>
+          <button class="btn btn-success btn-sm brt-0 rounded-0" id="add-note-button" title="Save the note">
+            <img src="../../icons/addnote.svg" alt="add new note" />
+          </button>
+        </div>
+
+        <div class="input-group mb-2">
+          <button class="btn btn-outline-primary active rounded-0" id="crop-toggle" title="Crop" checked>
+            <img class="img-center" src="../../icons/crop.svg" id="crop-icon" alt="Crop" />
+          </button>
+          <button class="btn btn-primary d-flex flex-column align-items-center col rounded-0" id="screenshot-button" title="Take a screenshot">
+            <img src="../../icons/addscreenshot.svg" alt="save a screenshot" />
+            <span class="d-block">(Ctrl+Shift+X)</span>
+          </button>
+        </div>
+
+        <div class="form-group d-flex flex-column mb-2">
+          <button class="btn btn-primary brb-0 rounded-0" id="scan-button" data-toggle="tooltip" title="Take and scan a screenshot">
+            <img src="../../icons/scan.svg" alt="scan and save screenshot" />
+            <span class="d-block">(Ctrl+Shift+A)</span>
+          </button>
+          <div class="progress brt-0 rounded-0">
+            <div class="progress-bar progress-bar-striped bg-primary" id="scan-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"> 100% </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ga-notes d-flex flex-column overflow-hidden">
+        <div class="overflow-auto invisible-scroll" id="notes-container"></div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script src="./notesRenderer.js"></script>
