@@ -16,20 +16,28 @@ const mapIconFolder = path.join(process.cwd(), "/icons/");
  * Creates window for maps
  */
 function createWindow() {
+  initDirectories();
+
   let win = new BrowserWindow({
     width: 1800,
     height: 880,
     webPreferences: {
       preload: path.join(__dirname, "mapsPreload.js"),
+      disableDialogs: true,
     },
+    show: false,
   });
+
+  win.removeMenu();
 
   win.loadFile(path.join(__dirname, "maps.html"));
 
-  win.on("ready-to-show", () => {
+  win.once("ready-to-show", () => {
     globalShortcut.register("CommandOrControl+shift+M", () => {
       win.webContents.postMessage("shortcut:take-screenshot", null);
     });
+
+    win.show();
   });
 
   win.on("closed", () => {
@@ -98,6 +106,26 @@ function createWindow() {
 }
 
 /**
+ * Creates needed folders and files
+ */
+function initDirectories() {
+  if (!fs.existsSync(mapScreenshotFolder)) {
+    fs.mkdirSync(mapScreenshotFolder, { recursive: true });
+    console.log("Screenshot folder created");
+  }
+
+  if (!fs.existsSync(mapsFolder)) {
+    fs.mkdirSync(mapsFolder);
+    console.log("Maps folder created");
+  }
+
+  if (!fs.existsSync(mapMarkersFolder)) {
+    fs.mkdirSync(mapMarkersFolder);
+    console.log("Map marker folder created");
+  }
+}
+
+/**
  * @param {string} path
  */
 function pathExists(path) {
@@ -111,9 +139,10 @@ function getScreenshots() {
   return new Promise((resolve, reject) => {
     fs.readdir(mapScreenshotFolder, (err, dir) => {
       if (err) reject(err);
-
-      var fileNames = Array.from(dir, (x) => path.parse(x).name);
-      resolve(fileNames);
+      else {
+        var fileNames = Array.from(dir, (x) => path.parse(x).name);
+        resolve(fileNames);
+      }
     });
   });
 }
@@ -155,13 +184,6 @@ function takeScreenshot(source) {
  * @param {Buffer} buffer - Screenshot buffer
  */
 function addScreenshot(buffer) {
-  if (!fs.existsSync(mapScreenshotFolder)) {
-    fs.mkdirSync(mapScreenshotFolder, {
-      recursive: true,
-    });
-    console.log("screenshot folder created");
-  }
-
   return new Promise((resolve, reject) => {
     if (buffer) {
       let screenshotFileName = new Date().getTime().toString();
@@ -199,12 +221,13 @@ function getMaps() {
   return new Promise((resolve, reject) => {
     fs.readdir(mapsFolder, (err, dir) => {
       if (err) reject(err);
-
-      var fileNames = Array.from(
-        dir.filter((x) => x.includes(".json")),
-        (x) => path.parse(x).name
-      );
-      resolve(fileNames);
+      else {
+        var fileNames = Array.from(
+          dir.filter((x) => x.includes(".json")),
+          (x) => path.parse(x).name
+        );
+        resolve(fileNames);
+      }
     });
   });
 }
@@ -234,11 +257,6 @@ function getMap(name) {
  * @param {string} name
  */
 function addMap(name) {
-  if (!fs.existsSync(mapsFolder)) {
-    fs.mkdirSync(mapsFolder);
-    console.log("Maps folder created");
-  }
-
   return new Promise((resolve, reject) => {
     if (name.trim().length === 0) {
       reject("Name is invalid");
@@ -298,13 +316,10 @@ function deleteMap(name) {
     const mapPath = mapsFolder + name + ".json";
     const markersPath = mapMarkersFolder + name + "-markers.json";
 
-    if (fs.existsSync(mapPath)) {
-      fs.unlinkSync(mapPath);
+    if (fs.existsSync(mapPath)) fs.unlinkSync(mapPath);
+    if (fs.existsSync(markersPath)) fs.unlinkSync(markersPath);
 
-      if (fs.existsSync(markersPath)) fs.unlinkSync(markersPath);
-
-      resolve(true);
-    } else reject("Map not found");
+    resolve(true);
   });
 }
 
@@ -314,11 +329,6 @@ function deleteMap(name) {
  * @param {string} json - Marker data
  */
 function updateMapMarkers(name, json) {
-  if (!fs.existsSync(mapMarkersFolder)) {
-    fs.mkdirSync(mapMarkersFolder);
-    console.log("Map marker folder created");
-  }
-
   return new Promise((resolve, reject) => {
     if (name.trim().length === 0) {
       reject("Name is invalid");

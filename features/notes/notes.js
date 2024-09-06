@@ -15,23 +15,31 @@ const noteScreenshotFolder = path.join(process.resourcesPath, "/screenshots/note
  * Creates window for notes
  */
 function createWindow() {
+  initDirectories();
+
   let win = new BrowserWindow({
     width: 1200,
     height: 750,
     webPreferences: {
       preload: path.join(__dirname, "notesPreload.js"),
+      disableDialogs: true,
     },
+    show: false,
   });
+
+  win.removeMenu();
 
   win.loadFile(path.join(__dirname, "notes.html"));
 
-  win.on("ready-to-show", () => {
+  win.once("ready-to-show", () => {
     globalShortcut.register("CommandOrControl+shift+X", () => {
       win.webContents.postMessage("shortcut:take-screenshot", null);
     });
     globalShortcut.register("CommandOrControl+shift+A", () => {
       win.webContents.postMessage("shortcut:scan-screenshot", null);
     });
+
+    win.show();
   });
 
   win.on("closed", () => {
@@ -78,15 +86,25 @@ function createWindow() {
 }
 
 /**
+ * Creates needed folders and files
+ */
+function initDirectories() {
+  if (!fs.existsSync(notesFilePath)) {
+    fs.writeFileSync(notesFilePath, "[]");
+    console.log("Notes file created");
+  }
+
+  if (!fs.existsSync(noteScreenshotFolder)) {
+    fs.mkdirSync(noteScreenshotFolder, { recursive: true });
+    console.log("Note screenshot folder created");
+  }
+}
+
+/**
  * Returns notes file as a json object
  * @returns {Object} notes as a json object
  */
 function getNotes() {
-  if (!fs.existsSync(notesFilePath)) {
-    fs.writeFileSync(notesFilePath, "[]");
-    console.log("notes file created");
-  }
-
   return JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
 }
 
@@ -96,11 +114,6 @@ function getNotes() {
  * @param {Buffer} [screenshotBuffer]
  */
 function addNote(noteText, screenshotBuffer) {
-  if (!fs.existsSync(notesFilePath)) {
-    fs.writeFileSync(notesFilePath, "[]");
-    console.log("notes file created");
-  }
-
   return new Promise((resolve, reject) => {
     let json = JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
     let screenshotFileName = screenshotBuffer ? new Date().getTime().toString() : "";
@@ -136,11 +149,6 @@ function addNote(noteText, screenshotBuffer) {
  * @param {number} id
  */
 function deleteNote(id) {
-  if (!fs.existsSync(notesFilePath)) {
-    fs.writeFileSync(notesFilePath, "[]");
-    console.log("notes file created");
-  }
-
   let json = JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
 
   return new Promise((resolve, reject) => {
@@ -175,11 +183,6 @@ function deleteNote(id) {
  * @param {string} text
  */
 function updateNote(id, text) {
-  if (!fs.existsSync(notesFilePath)) {
-    fs.writeFileSync(notesFilePath, "[]");
-    console.log("notes file created");
-  }
-
   return new Promise((resolve, reject) => {
     let json = JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
     let index = json.findIndex((x) => x.id === id);

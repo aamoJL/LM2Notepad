@@ -1,0 +1,2 @@
+Pack application, creates a build folder inside the project folder:
+  npm run dist
