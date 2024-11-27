@@ -10,7 +10,7 @@ const screenCapture = require("../screenCapture/screenCapture.js");
 const mapScreenshotFolder = path.join(process.resourcesPath, "/screenshots/map/");
 const mapsFolder = path.join(process.resourcesPath, "/maps/");
 const mapMarkersFolder = path.join(process.resourcesPath, "/maps/markers/");
-const mapIconFolder = path.join(process.cwd(), "/icons/");
+const mapIconFolder = path.join(__dirname, "../..", "/assets/icons/");
 
 /**
  * Creates window for maps
@@ -54,6 +54,10 @@ function createWindow() {
 
   ipcMain.handle("path-exists", (_e, path) => {
     return pathExists(path);
+  });
+
+  ipcMain.handle("get-file-name", (_e, path) => {
+    return getFileName(path);
   });
 
   ipcMain.handle("get-screenshots", () => {
@@ -130,6 +134,13 @@ function initDirectories() {
  */
 function pathExists(path) {
   return fs.existsSync(path);
+}
+
+/**
+ * @param {string} filePath
+ */
+function getFileName(filePath) {
+  return path.parse(filePath).name;
 }
 
 /**

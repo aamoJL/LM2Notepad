@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     exists: (path) => ipcRenderer.invoke("path-exists", path),
     mapScreenshotFolder: () => ipcRenderer.invoke("get-map-screenshot-path"),
     mapIconFolder: () => ipcRenderer.invoke("get-map-icon-path"),
+    getFileName: (path) => ipcRenderer.invoke("get-file-name", path),
   },
   dialog: {
     show: (options) => ipcRenderer.send("show-dialog", options),

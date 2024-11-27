@@ -226,7 +226,7 @@ function addDropEvents() {
         case "icon":
           const iconPosition = getRelativePointerPosition(markerLayer);
           const iconOffset = 35;
-          addIcon(dragItemURL, { x: iconPosition.x - iconOffset, y: iconPosition.y - iconOffset }, markerLayer);
+          await addIcon(dragItemURL, { x: iconPosition.x - iconOffset, y: iconPosition.y - iconOffset }, markerLayer);
           updateMapMarkers(selectedMap, markerLayer.toJSON());
           break;
         case "text":
@@ -262,7 +262,7 @@ async function addImage(position, imageUrl, layer) {
   var exits = await window.electronAPI.path.exists(imageUrl);
 
   if (exits) {
-    addMapImageToLayer(imageUrl, position, mapOptions.cellSize, layer, (image) => {
+    await addMapImageToLayer(imageUrl, position, mapOptions.cellSize, layer, (image) => {
       addEventsToMapImage(image, layer, mapOptions.cellSize, stage, () => {
         updateMap(selectedMap, layer.toJSON());
       });
@@ -275,8 +275,8 @@ async function addImage(position, imageUrl, layer) {
  * @param {string} iconUrl
  * @param {*} layer - Icon layer
  */
-function addIcon(iconUrl, position, layer) {
-  addMarkerToLayer(iconUrl, position, layer, (image) => {
+async function addIcon(iconUrl, position, layer) {
+  await addMarkerToLayer(iconUrl, position, layer, (image) => {
     addEventsToMapMarker(image, layer, stage, () => {
       updateMapMarkers(selectedMap, layer.toJSON());
     });
@@ -319,9 +319,12 @@ function addArrow(points, layer) {
  * @param {*} layer -Konva layer object
  * @param {Function} callback -Optional, Returns the image object that was created.
  */
-function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
+async function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
   let newImg = new Image();
   newImg.src = imagePath;
+
+  // @ts-ignore
+  var id = await window.electronAPI.path.getFileName(imagePath);
 
   // @ts-ignore
   var image = new Konva.Image({
@@ -331,7 +334,7 @@ function addMapImageToLayer(imagePath, position, cellSize, layer, callback) {
     width: cellSize.x,
     height: cellSize.y,
     draggable: false,
-    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(), // get file name
+    imageId: id,
   });
 
   layer.add(image);
@@ -409,10 +412,12 @@ function addEventsToMapImage(image, layer, cellSize, stage, onChange) {
  * @param {*} layer -Konva layer object
  * @param {Function} callback -Optional, returns the image object that was created.
  */
-function addMarkerToLayer(imagePath, position, layer, callback) {
-  //let imageId = path.parse(imagePath).name;
+async function addMarkerToLayer(imagePath, position, layer, callback) {
   let newImg = new Image();
   newImg.src = imagePath;
+
+  // @ts-ignore
+  var id = await window.electronAPI.path.getFileName(imagePath);
 
   // @ts-ignore
   var image = new Konva.Image({
@@ -422,7 +427,7 @@ function addMarkerToLayer(imagePath, position, layer, callback) {
     width: 70,
     height: 70,
     draggable: false,
-    imageId: /[\w-]+?(?=\.)/g.exec(imagePath)?.pop(), // get file name
+    imageId: id,
     opacity: 0.8,
   });
 
@@ -877,10 +882,10 @@ function loadMap(mapName) {
         // @ts-ignore
         let mapIconFolderPath = await window.electronAPI.path.mapIconFolder();
 
-        markers?.children?.forEach((child) => {
+        markers?.children?.forEach(async (child) => {
           switch (child.className) {
             case "Image":
-              addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+              await addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
               break;
             case "Text":
               addText(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
