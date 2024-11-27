@@ -281,7 +281,7 @@ async function prependNoteToContainer(text, screenshotPath, id) {
  * @returns {ChildNode | null}
  */
 function createNoteCardElement(text, screenshotPath, id) {
-  const iconPath = "../../icons";
+  const iconPath = "../../assets/icons";
 
   const templateData = `<div class="card mb-1 rounded-0" id="note-container-${id}">
   <div class="row no-gutters">

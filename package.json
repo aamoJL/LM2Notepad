@@ -28,6 +28,9 @@
     "nsis": {
       "packElevateHelper": false
     },
+    "extraFiles":[
+      "eng.traineddata"
+    ],
     "icon": null,
     "target": "portable",
     "productName": "LM2 Notepad",
