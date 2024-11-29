@@ -2,9 +2,13 @@
  * Renderer process for maps window
  */
 
+import * as canvasRenderer from "./mapCanvasRenderer.js";
+
 var selectedMap = null;
 
 window.addEventListener("load", async () => {
+  canvasRenderer.init();
+
   // @ts-ignore
   window.electronAPI.shortcut.onTakeScreenshotShortcut(() => {
     document.getElementById("screenshot-button")?.click();
@@ -17,6 +21,7 @@ window.addEventListener("load", async () => {
   // Select first map if exists
   // @ts-ignore
   var initMaps = await window.electronAPI.map.get();
+
   if (initMaps?.length > 0) {
     selectMap(initMaps.sort()[0]);
   }
@@ -69,6 +74,14 @@ document.getElementById("new-map-button")?.addEventListener("click", (e) => {
         });
       });
   }
+});
+document.addEventListener(canvasRenderer.mapChangeEvent.type, (e) => {
+  // @ts-ignore
+  updateMap(e.detail.data.json);
+});
+document.addEventListener(canvasRenderer.markerChangeEvent.type, (e) => {
+  // @ts-ignore
+  updateMapMarkers(e.detail.data.json);
 });
 
 /**
@@ -169,27 +182,24 @@ function deleteMap(name) {
 
 /**
  * Saves map layer to a file
- * @param {string} mapName - Name of the map
  * @param {string} json - Map data
  */
-function updateMap(mapName, json) {
-  if (!mapName) return;
+function updateMap(json) {
+  if (!selectedMap || !json) return;
 
   // @ts-ignore
-  return window.electronAPI.map.update({ name: mapName, json: json });
+  return window.electronAPI.map.update({ name: selectedMap, json: json });
 }
 
 /**
  * Saves map markers to a JSON file
- *
- * @param {string} mapName - Name of the map
  * @param {string} json - Marker data
  */
-function updateMapMarkers(mapName, json) {
-  if (!mapName) return;
+function updateMapMarkers(json) {
+  if (!selectedMap || !json) return;
 
   // @ts-ignore
-  return window.electronAPI.map.markers.update({ name: mapName, json: json });
+  return window.electronAPI.map.markers.update({ name: selectedMap, json: json });
 }
 
 /**
@@ -310,14 +320,14 @@ function selectMap(name) {
     }
   }
 
-  loadMap(selectedMap);
-}
-
-/**
- * Sanitizes string
- * @param {*} unsafe
- * @returns {string}
- */
-function escapeHtml(unsafe) {
-  return unsafe.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  // @ts-ignore
+  window.electronAPI.map
+    .getByName(selectedMap)
+    .then(async ({ map, markers }) => {
+      canvasRenderer.changeMap(map, markers);
+    })
+    .catch((err) => {
+      console.error(err);
+      return;
+    });
 }

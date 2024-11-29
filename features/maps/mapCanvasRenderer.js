@@ -26,10 +26,15 @@ var mapLayer = new Konva.Layer();
 // @ts-ignore
 var markerLayer = new Konva.Layer();
 
-let dragItemType = ""; // Type of the item that is being dragged
-let dragItemURL = ""; // Path to image that is being dragged
+let dragArgs = {
+  itemType: "", // Type of the item that is being dragged
+  itemURL: "", // Path to image that is being dragged
+};
 
-window.addEventListener("load", () => {
+const mapChangeEvent = new CustomEvent("map-change", { detail: { data: { json: "" } } });
+const markerChangeEvent = new CustomEvent("marker-change", { detail: { data: { json: "" } } });
+
+function init() {
   resizeStage();
 
   // Init the map canvas
@@ -43,46 +48,46 @@ window.addEventListener("load", () => {
 
   addDragEvents();
   addDropEvents();
-});
 
-window.addEventListener("resize", () => {
-  resizeStage();
-});
+  window.addEventListener("resize", () => {
+    resizeStage();
+  });
 
-stage.on("wheel", (e) => {
-  e.evt.preventDefault();
+  stage.on("wheel", (e) => {
+    e.evt.preventDefault();
 
-  let pointerPosition = stage.getPointerPosition();
+    let pointerPosition = stage.getPointerPosition();
 
-  if (pointerPosition == null) return;
+    if (pointerPosition == null) return;
 
-  // Map zooming
-  let oldScale = stage.scaleX();
+    // Map zooming
+    let oldScale = stage.scaleX();
 
-  var mousePointTo = {
-    x: pointerPosition.x / oldScale - stage.x() / oldScale,
-    y: pointerPosition.y / oldScale - stage.y() / oldScale,
-  };
+    var mousePointTo = {
+      x: pointerPosition.x / oldScale - stage.x() / oldScale,
+      y: pointerPosition.y / oldScale - stage.y() / oldScale,
+    };
 
-  var newScale = e.evt.deltaY < 0 ? oldScale * mapOptions.zoomDelta : oldScale / mapOptions.zoomDelta;
-  stage.scale({ x: newScale, y: newScale });
+    var newScale = e.evt.deltaY < 0 ? oldScale * mapOptions.zoomDelta : oldScale / mapOptions.zoomDelta;
+    stage.scale({ x: newScale, y: newScale });
 
-  var newPos = {
-    x: -(mousePointTo.x - pointerPosition.x / newScale) * newScale,
-    y: -(mousePointTo.y - pointerPosition.y / newScale) * newScale,
-  };
-  stage.position(newPos);
-  stage.batchDraw();
-});
+    var newPos = {
+      x: -(mousePointTo.x - pointerPosition.x / newScale) * newScale,
+      y: -(mousePointTo.y - pointerPosition.y / newScale) * newScale,
+    };
+    stage.position(newPos);
+    stage.batchDraw();
+  });
 
-stage.on("mousedown", (e) => {
-  // Map dragging
-  if (e.evt.button === 1) {
-    stage.draggable(true);
-  } else {
-    stage.draggable(false);
-  }
-});
+  stage.on("mousedown", (e) => {
+    // Map dragging
+    if (e.evt.button === 1) {
+      stage.draggable(true);
+    } else {
+      stage.draggable(false);
+    }
+  });
+}
 
 /**
  * Calculates stage width and height
@@ -163,9 +168,11 @@ function addDragEvents() {
   if (mapToolsContainer) {
     mapToolsContainer.querySelectorAll(".map-icon").forEach((element) => {
       element.addEventListener("dragstart", (e) => {
-        dragItemType = "icon";
-        // @ts-ignore
-        dragItemURL = e.target.getAttribute("src")?.toString() ?? "";
+        dragArgs = {
+          itemType: "icon",
+          // @ts-ignore
+          itemURL: e.target.getAttribute("src")?.toString() ?? "",
+        };
       });
     });
   } else {
@@ -175,8 +182,10 @@ function addDragEvents() {
   // Text
   if (mapText) {
     mapText.addEventListener("dragstart", () => {
-      dragItemType = "text";
-      dragItemURL = "";
+      dragArgs = {
+        itemType: "text",
+        itemURL: "",
+      };
     });
   } else {
     console.error("Map text was not found");
@@ -185,8 +194,10 @@ function addDragEvents() {
   // Arrow
   if (mapArrow) {
     mapArrow.addEventListener("dragstart", () => {
-      dragItemType = "arrow";
-      dragItemURL = "";
+      dragArgs = {
+        itemType: "arrow",
+        itemURL: "",
+      };
     });
   } else {
     console.error("Map arrow was not found");
@@ -195,9 +206,11 @@ function addDragEvents() {
   // Add image drag and drop to screenshot list
   if (mapScreenshotList) {
     mapScreenshotList.addEventListener("dragstart", (e) => {
-      dragItemType = "image";
-      // @ts-ignore
-      dragItemURL = e.target.getAttribute("src")?.toString() ?? "";
+      dragArgs = {
+        itemType: "image",
+        // @ts-ignore
+        itemURL: e.target.getAttribute("src")?.toString() ?? "",
+      };
     });
   } else {
     console.error("Map screenshot list was not found");
@@ -217,17 +230,17 @@ function addDropEvents() {
     e.preventDefault();
     stage.setPointersPositions(e);
 
-    if (dragItemType) {
-      switch (dragItemType) {
+    if (dragArgs) {
+      switch (dragArgs.itemType) {
         case "image":
-          await addImage(alignPositionToGrid(getRelativePointerPosition(mapLayer), mapOptions.cellSize), dragItemURL, mapLayer);
-          updateMap(selectedMap, mapLayer.toJSON());
+          await addImage(alignPositionToGrid(getRelativePointerPosition(mapLayer), mapOptions.cellSize), dragArgs.itemURL, mapLayer);
+          onUpdateMap();
           break;
         case "icon":
           const iconPosition = getRelativePointerPosition(markerLayer);
           const iconOffset = 35;
-          await addIcon(dragItemURL, { x: iconPosition.x - iconOffset, y: iconPosition.y - iconOffset }, markerLayer);
-          updateMapMarkers(selectedMap, markerLayer.toJSON());
+          await addIcon(dragArgs.itemURL, { x: iconPosition.x - iconOffset, y: iconPosition.y - iconOffset }, markerLayer);
+          onUpdateMapMarkers();
           break;
         case "text":
           const textInput = document.getElementById("map-text-input");
@@ -236,18 +249,21 @@ function addDropEvents() {
           // @ts-ignore
           textInput.value = "";
           addText(text, getRelativePointerPosition(markerLayer), markerLayer);
-          updateMapMarkers(selectedMap, markerLayer.toJSON());
+          onUpdateMapMarkers();
           break;
         case "arrow":
           const arrowPosition = getRelativePointerPosition(markerLayer);
           const endPointOffset = 200;
           const points = [arrowPosition.x - endPointOffset, arrowPosition.y, arrowPosition.x + endPointOffset, arrowPosition.y];
           addArrow(points, markerLayer);
-          updateMapMarkers(selectedMap, markerLayer.toJSON());
+          onUpdateMapMarkers();
           break;
       }
 
-      dragItemType = "";
+      dragArgs = {
+        itemType: "",
+        itemURL: "",
+      };
     }
   });
 }
@@ -264,7 +280,7 @@ async function addImage(position, imageUrl, layer) {
   if (exits) {
     await addMapImageToLayer(imageUrl, position, mapOptions.cellSize, layer, (image) => {
       addEventsToMapImage(image, layer, mapOptions.cellSize, stage, () => {
-        updateMap(selectedMap, layer.toJSON());
+        onUpdateMap();
       });
     });
   } else console.error("Image was not found: " + imageUrl);
@@ -278,7 +294,7 @@ async function addImage(position, imageUrl, layer) {
 async function addIcon(iconUrl, position, layer) {
   await addMarkerToLayer(iconUrl, position, layer, (image) => {
     addEventsToMapMarker(image, layer, stage, () => {
-      updateMapMarkers(selectedMap, layer.toJSON());
+      onUpdateMapMarkers();
     });
   });
 }
@@ -292,7 +308,7 @@ function addText(text, position, layer) {
   if (text) {
     addTextToLayer(text.toString(), position, layer, (textNode) => {
       addEventsToMapText(textNode, layer, stage, () => {
-        updateMapMarkers(selectedMap, layer.toJSON());
+        onUpdateMapMarkers();
       });
     });
   }
@@ -305,7 +321,7 @@ function addText(text, position, layer) {
 function addArrow(points, layer) {
   addArrowToLayer(points, layer, (objects) => {
     addEventsToMapArrow(objects, layer, stage, () => {
-      updateMapMarkers(selectedMap, layer.toJSON());
+      onUpdateMapMarkers();
     });
   });
 }
@@ -859,50 +875,46 @@ function getRelativePointerPosition(node) {
 
 /**
  * Load map images to stage
- * @param {string} mapName -Name of the map
+ * @param {any} mapJson
+ * @param {any} markerJson
  */
-function loadMap(mapName) {
+async function changeMap(mapJson, markerJson) {
   // @ts-ignore
   var newMapLayer = new Konva.Layer();
   // @ts-ignore
   var newMarkerlayer = new Konva.Layer();
 
-  if (mapName) {
+  if (mapJson) {
     // @ts-ignore
-    window.electronAPI.map
-      .getByName(mapName)
-      .then(async ({ map, markers }) => {
-        // @ts-ignore
-        let mapImageFolderPath = await window.electronAPI.path.mapScreenshotFolder();
+    let mapImageFolderPath = await window.electronAPI.path.mapScreenshotFolder();
 
-        map.children?.forEach((child) => {
-          addImage({ x: child.attrs.x, y: child.attrs.y }, mapImageFolderPath + child.attrs.imageId + ".png", newMapLayer);
-        });
+    mapJson.children?.forEach((child) => {
+      addImage({ x: child.attrs.x, y: child.attrs.y }, mapImageFolderPath + child.attrs.imageId + ".png", newMapLayer);
+    });
 
-        // @ts-ignore
-        let mapIconFolderPath = await window.electronAPI.path.mapIconFolder();
+    if (markerJson) {
+      // @ts-ignore
+      let mapIconFolderPath = await window.electronAPI.path.mapIconFolder();
 
-        markers?.children?.forEach(async (child) => {
-          switch (child.className) {
-            case "Image":
-              await addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
-              break;
-            case "Text":
-              addText(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
-              break;
-            case "Arrow":
-              if (child.attrs.type === "Arrow") {
-                const points = [child.attrs.points[0], child.attrs.points[1], child.attrs.points[2], child.attrs.points[3]];
-                addArrow(points, newMarkerlayer);
-              }
-              break;
-          }
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-        return;
+      markerJson?.children?.forEach(async (child) => {
+        switch (child.className) {
+          case "Image":
+            await addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+            break;
+          case "Text":
+            addText(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+            break;
+          case "Arrow":
+            if (child.attrs.type === "Arrow") {
+              const points = [child.attrs.points[0], child.attrs.points[1], child.attrs.points[2], child.attrs.points[3]];
+              addArrow(points, newMarkerlayer);
+            }
+            break;
+        }
       });
+    }
+  } else {
+    console.error("map is null");
   }
 
   // Change the old layers to new layers
@@ -921,3 +933,25 @@ function loadMap(mapName) {
   markerLayer.moveToTop();
   gridLayer.moveToBottom();
 }
+
+/**
+ * Dispatches marker changed event
+ */
+function onUpdateMapMarkers() {
+  markerChangeEvent.detail.data = {
+    json: markerLayer.toJSON(),
+  };
+  document.dispatchEvent(markerChangeEvent);
+}
+
+/**
+ * Dispatches map changed event
+ */
+function onUpdateMap() {
+  mapChangeEvent.detail.data = {
+    json: mapLayer.toJSON(),
+  };
+  document.dispatchEvent(mapChangeEvent);
+}
+
+export { init, changeMap, mapChangeEvent, markerChangeEvent };

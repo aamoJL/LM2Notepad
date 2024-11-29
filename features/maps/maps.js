@@ -28,7 +28,7 @@ function createWindow() {
     show: false,
   });
 
-  win.removeMenu();
+  //win.removeMenu();
 
   win.loadFile(path.join(__dirname, "maps.html"));
 
