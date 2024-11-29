@@ -6,10 +6,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   screenshot: {
     getSources: () => ipcRenderer.invoke("get-sources"),
-    get: () => ipcRenderer.invoke("get-screenshots"),
+    get: (mapName) => ipcRenderer.invoke("get-screenshots", mapName),
     take: (source) => ipcRenderer.invoke("maps:take-screenshot", source),
-    add: (buffer) => ipcRenderer.invoke("add-screenshot", buffer),
-    delete: (name) => ipcRenderer.invoke("delete-screenshot", name),
+    add: ({ buffer, mapName }) => ipcRenderer.invoke("add-screenshot", { buffer, mapName }),
+    delete: ({ screenshotName, mapName }) => ipcRenderer.invoke("delete-screenshot", { screenshotName, mapName }),
   },
   map: {
     get: () => ipcRenderer.invoke("get-maps"),
@@ -23,9 +23,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   path: {
     exists: (path) => ipcRenderer.invoke("path-exists", path),
-    mapScreenshotFolder: () => ipcRenderer.invoke("get-map-screenshot-path"),
+    mapScreenshotFolder: (mapName) => ipcRenderer.invoke("get-map-screenshot-path", mapName),
     mapIconFolder: () => ipcRenderer.invoke("get-map-icon-path"),
     getFileName: (path) => ipcRenderer.invoke("get-file-name", path),
+    join: (args) => ipcRenderer.invoke("path-join", args),
   },
   dialog: {
     show: (options) => ipcRenderer.send("show-dialog", options),

@@ -4,7 +4,7 @@
 
 import * as canvasRenderer from "./mapCanvasRenderer.js";
 
-var selectedMap = null;
+var selectedMapName = null;
 
 window.addEventListener("load", async () => {
   canvasRenderer.init();
@@ -31,6 +31,8 @@ document.getElementById("refresh-sources-list-button")?.addEventListener("click"
   await refreshSourceList();
 });
 document.getElementById("screenshot-button")?.addEventListener("click", () => {
+  if (!selectedMapName) return;
+
   // @ts-ignore
   let sourceName = document.getElementById("screenshot-source-list")?.value ?? "";
 
@@ -38,11 +40,11 @@ document.getElementById("screenshot-button")?.addEventListener("click", () => {
     .then((buffer) => {
       // @ts-ignore
       window.electronAPI.screenshot
-        .add(buffer)
-        .then(async (screenshotName) => {
+        .add({ buffer, mapName: selectedMapName })
+        .then(async (/** @type {string} */ screenshotName) => {
           // @ts-ignore
-          const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder();
-          prependScreenshotToContainer(screenshotName, screenshotFolder);
+          const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder(selectedMapName);
+          await prependScreenshotToContainer(screenshotName, screenshotFolder);
         })
         .catch((err) => console.error(err));
     })
@@ -60,7 +62,7 @@ document.getElementById("new-map-button")?.addEventListener("click", (e) => {
       .then((name) => {
         insertMapToContainer(name);
 
-        if (selectedMap !== name) selectMap(name);
+        if (selectedMapName !== name) selectMap(name);
 
         // @ts-ignore
         mapNameInput.value = "";
@@ -115,15 +117,21 @@ async function refreshSourceList() {
  * Append screenshot images from screenshot folder to screenshot list
  */
 function refreshScreenshotList() {
+  document.getElementById("map-screenshot-list")?.replaceChildren();
+
+  if (!selectedMapName) return;
+
   // @ts-ignore
   window.electronAPI.screenshot
-    .get()
+    .get(selectedMapName)
     .then(async (screenshots) => {
-      // @ts-ignore
-      const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder();
+      if (!screenshots) return;
 
-      screenshots.forEach((screenshotName) => {
-        prependScreenshotToContainer(screenshotName, screenshotFolder);
+      // @ts-ignore
+      const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder(selectedMapName);
+
+      screenshots.forEach(async (screenshotName) => {
+        await prependScreenshotToContainer(screenshotName, screenshotFolder);
       });
     })
     .catch((err) => console.error(err));
@@ -185,10 +193,10 @@ function deleteMap(name) {
  * @param {string} json - Map data
  */
 function updateMap(json) {
-  if (!selectedMap || !json) return;
+  if (!selectedMapName || !json) return;
 
   // @ts-ignore
-  return window.electronAPI.map.update({ name: selectedMap, json: json });
+  return window.electronAPI.map.update({ name: selectedMapName, json: json });
 }
 
 /**
@@ -196,10 +204,10 @@ function updateMap(json) {
  * @param {string} json - Marker data
  */
 function updateMapMarkers(json) {
-  if (!selectedMap || !json) return;
+  if (!selectedMapName || !json) return;
 
   // @ts-ignore
-  return window.electronAPI.map.markers.update({ name: selectedMap, json: json });
+  return window.electronAPI.map.markers.update({ name: selectedMapName, json: json });
 }
 
 /**
@@ -207,15 +215,17 @@ function updateMapMarkers(json) {
  * @param {string} screenshotName - Screenshot's file name
  * @param {string} screenshotFolder - Path to screenshot folder
  */
-function prependScreenshotToContainer(screenshotName, screenshotFolder) {
+async function prependScreenshotToContainer(screenshotName, screenshotFolder) {
   const screenshotList = document.getElementById("map-screenshot-list");
-  const screenshotPath = screenshotFolder + screenshotName + ".png";
 
-  if (screenshotList) {
+  // @ts-ignore
+  const screenshotPath = await window.electronAPI.path.join([screenshotFolder, `${screenshotName}.png`]);
+
+  if (screenshotList && screenshotPath) {
     let img = document.createElement("img");
     img.src = screenshotPath;
     img.classList.add("pb-1", "pt-1", "mw-100");
-    img.id = "screenshot-" + screenshotName;
+    img.id = `screenshot-${screenshotName}`;
     img.setAttribute("draggable", "true");
 
     screenshotList.prepend(img);
@@ -233,7 +243,7 @@ function prependScreenshotToContainer(screenshotName, screenshotFolder) {
           if (res.response === 0) {
             // @ts-ignore
             window.electronAPI.screenshot
-              .delete(screenshotName)
+              .delete({ screenshotName, selectedMapName })
               .then(() => {
                 screenshotList.removeChild(img);
               })
@@ -283,7 +293,7 @@ function insertMapToContainer(name) {
       .then((res) => {
         if (res.response === 0) {
           deleteMap(name).then(async () => {
-            if (selectedMap === name) {
+            if (selectedMapName === name) {
               // Select first map
               // @ts-ignore
               var initMaps = await window.electronAPI.map.get();
@@ -304,16 +314,16 @@ function insertMapToContainer(name) {
  * @param {string} name - Name of the selected map
  */
 function selectMap(name) {
-  if (selectedMap === name) return;
+  if (selectedMapName === name) return;
 
-  selectedMap = name;
+  selectedMapName = name;
 
   let mapLinkContainer = document.getElementById("map-link-list");
 
   if (mapLinkContainer) {
     mapLinkContainer.querySelector(".active")?.classList.remove("active");
 
-    if (selectedMap) {
+    if (selectedMapName) {
       Array.from(mapLinkContainer.querySelectorAll("button"))
         .find((x) => x.innerText === name)
         ?.classList.add("active");
@@ -322,9 +332,10 @@ function selectMap(name) {
 
   // @ts-ignore
   window.electronAPI.map
-    .getByName(selectedMap)
-    .then(async ({ map, markers }) => {
-      canvasRenderer.changeMap(map, markers);
+    .getByName(selectedMapName)
+    .then(async ({ map: mapJson, markers: markersJson }) => {
+      refreshScreenshotList();
+      canvasRenderer.changeMap(selectedMapName, mapJson, markersJson);
     })
     .catch((err) => {
       console.error(err);
