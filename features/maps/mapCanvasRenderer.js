@@ -902,7 +902,9 @@ async function changeMap(mapName, mapJson, markerJson) {
       markerJson?.children?.forEach(async (child) => {
         switch (child.className) {
           case "Image":
-            await addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+            // @ts-ignore
+            let iconPath = await window.electronAPI.path.join([mapIconFolderPath, `${child.attrs.imageId}.svg`]);
+            await addIcon(iconPath, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
             break;
           case "Text":
             addText(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
