@@ -263,7 +263,7 @@ async function prependScreenshotToContainer(screenshotName, screenshotFolder, is
           if (res.response === 0) {
             // @ts-ignore
             window.electronAPI.screenshot
-              .delete({ screenshotName, selectedMapName })
+              .delete({ screenshotName: screenshotName, mapName: selectedMapName })
               .then(() => {
                 screenshotList.removeChild(img);
               })
