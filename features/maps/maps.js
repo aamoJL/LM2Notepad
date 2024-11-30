@@ -8,8 +8,8 @@ const fs = require("fs");
 const screenCapture = require("../screenCapture/screenCapture.js");
 const { mkdirSync } = require("node:fs");
 
-const mapsFolder = path.join(process.resourcesPath, "/maps/");
-const mapIconFolder = path.join(__dirname, "../..", "/assets/icons/");
+const mapsFolder = path.join(process.resourcesPath, "maps");
+const mapIconFolder = path.join(__dirname, "..", "..", "assets", "icons");
 const markersSuffix = "-markers";
 const screenshotFolderName = "screenshots";
 

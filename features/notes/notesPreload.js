@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   path: {
     noteScreenshotFolder: () => ipcRenderer.invoke("get-note-screenshot-path"),
+    join: (args) => ipcRenderer.invoke("notes:path-join", args),
   },
   dialog: {
     confirm: (options) => ipcRenderer.invoke("notes:confirm-dialog", options),
