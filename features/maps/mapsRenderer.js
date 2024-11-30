@@ -115,8 +115,9 @@ async function refreshSourceList() {
 
 /**
  * Append screenshot images from screenshot folder to screenshot list
+ * @param {string[]} hiddenScreenshots - List of screenshots that are already on the map canvas
  */
-function refreshScreenshotList() {
+function refreshScreenshotList(hiddenScreenshots = []) {
   document.getElementById("map-screenshot-list")?.replaceChildren();
 
   if (!selectedMapName) return;
@@ -131,7 +132,7 @@ function refreshScreenshotList() {
       const screenshotFolder = await window.electronAPI.path.mapScreenshotFolder(selectedMapName);
 
       screenshots.forEach(async (screenshotName) => {
-        await prependScreenshotToContainer(screenshotName, screenshotFolder);
+        await prependScreenshotToContainer(screenshotName, screenshotFolder, hiddenScreenshots.includes(screenshotName));
       });
     })
     .catch((err) => console.error(err));
@@ -195,6 +196,22 @@ function deleteMap(name) {
 function updateMap(json) {
   if (!selectedMapName || !json) return;
 
+  const screenshotList = document.getElementById("map-screenshot-list");
+  const parsedJson = JSON.parse(json);
+
+  // Set screenshot list item visibility
+  if (screenshotList) {
+    for (const child of screenshotList.children) {
+      /** @type {HTMLElement} */ (child).classList.remove("d-none");
+    }
+
+    parsedJson?.children?.forEach((item) => {
+      if (item.className !== "Image") return;
+
+      /** @type {HTMLElement} */ (screenshotList.querySelector(`#screenshot-${item.attrs.imageId}`))?.classList.add("d-none");
+    });
+  }
+
   // @ts-ignore
   return window.electronAPI.map.update({ name: selectedMapName, json: json });
 }
@@ -214,8 +231,9 @@ function updateMapMarkers(json) {
  * Appends screenshot to the screenshto list
  * @param {string} screenshotName - Screenshot's file name
  * @param {string} screenshotFolder - Path to screenshot folder
+ * @param {boolean} isHidden - Will the image be added as hidden
  */
-async function prependScreenshotToContainer(screenshotName, screenshotFolder) {
+async function prependScreenshotToContainer(screenshotName, screenshotFolder, isHidden = false) {
   const screenshotList = document.getElementById("map-screenshot-list");
 
   // @ts-ignore
@@ -227,6 +245,8 @@ async function prependScreenshotToContainer(screenshotName, screenshotFolder) {
     img.classList.add("pb-1", "pt-1", "mw-100");
     img.id = `screenshot-${screenshotName}`;
     img.setAttribute("draggable", "true");
+
+    if (isHidden) img.classList.add("d-none");
 
     screenshotList.prepend(img);
 
@@ -318,7 +338,7 @@ function selectMap(name) {
 
   selectedMapName = name;
 
-  let mapLinkContainer = document.getElementById("map-link-list");
+  const mapLinkContainer = document.getElementById("map-link-list");
 
   if (mapLinkContainer) {
     mapLinkContainer.querySelector(".active")?.classList.remove("active");
@@ -334,7 +354,8 @@ function selectMap(name) {
   window.electronAPI.map
     .getByName(selectedMapName)
     .then(async ({ map: mapJson, markers: markersJson }) => {
-      refreshScreenshotList();
+      refreshScreenshotList(mapJson?.children?.map((x) => x.attrs.imageId) ?? []);
+
       canvasRenderer.changeMap(selectedMapName, mapJson, markersJson);
     })
     .catch((err) => {
