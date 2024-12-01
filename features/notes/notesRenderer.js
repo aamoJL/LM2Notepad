@@ -36,7 +36,8 @@ document.getElementById("screenshot-button")?.addEventListener("click", () => {
         .then(async (note) => {
           // @ts-ignore
           const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
-          const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
+          // @ts-ignore
+          const screenshotPath = note.screenshot !== "" ? await window.electronAPI.path.join([screenshotFolder, `${note.screenshot}.png`]) : "";
 
           await prependNoteToContainer(note.text, screenshotPath, note.id);
         })
@@ -60,7 +61,8 @@ document.getElementById("scan-button")?.addEventListener("click", () => {
 
           // @ts-ignore
           const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
-          const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
+          // @ts-ignore
+          const screenshotPath = note.screenshot !== "" ? await window.electronAPI.path.join([screenshotFolder, `${note.screenshot}.png`]) : "";
 
           await prependNoteToContainer(note.text, screenshotPath, note.id);
         })
@@ -81,7 +83,8 @@ document.getElementById("add-note-button")?.addEventListener("click", () => {
       .then(async (note) => {
         // @ts-ignore
         const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
-        const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
+        // @ts-ignore
+        const screenshotPath = note.screenshot !== "" ? await window.electronAPI.path.join([screenshotFolder, `${note.screenshot}.png`]) : "";
 
         await prependNoteToContainer(note.text, screenshotPath, note.id);
 
@@ -147,7 +150,9 @@ async function refreshNoteList() {
 
   if (container) {
     notes.forEach(async (note) => {
-      const screenshotPath = note.screenshot !== "" ? screenshotFolder + note.screenshot + ".png" : "";
+      // @ts-ignore
+      const screenshotPath = note.screenshot !== "" ? await window.electronAPI.path.join([screenshotFolder, `${note.screenshot}.png`]) : "";
+
       await prependNoteToContainer(note.text, screenshotPath, note.id);
     });
   }

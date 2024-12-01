@@ -875,21 +875,24 @@ function getRelativePointerPosition(node) {
 
 /**
  * Load map images to stage
+ * @param {string} mapName
  * @param {any} mapJson
  * @param {any} markerJson
  */
-async function changeMap(mapJson, markerJson) {
+async function changeMap(mapName, mapJson, markerJson) {
   // @ts-ignore
   var newMapLayer = new Konva.Layer();
   // @ts-ignore
   var newMarkerlayer = new Konva.Layer();
 
-  if (mapJson) {
+  if (mapName && mapJson) {
     // @ts-ignore
-    let mapImageFolderPath = await window.electronAPI.path.mapScreenshotFolder();
+    let mapImageFolderPath = await window.electronAPI.path.mapScreenshotFolder(mapName);
 
-    mapJson.children?.forEach((child) => {
-      addImage({ x: child.attrs.x, y: child.attrs.y }, mapImageFolderPath + child.attrs.imageId + ".png", newMapLayer);
+    mapJson.children?.forEach(async (child) => {
+      // @ts-ignore
+      let imgUrl = await window.electronAPI.path.join([mapImageFolderPath, `${child.attrs.imageId}.png`]);
+      addImage({ x: child.attrs.x, y: child.attrs.y }, imgUrl, newMapLayer);
     });
 
     if (markerJson) {
@@ -899,7 +902,9 @@ async function changeMap(mapJson, markerJson) {
       markerJson?.children?.forEach(async (child) => {
         switch (child.className) {
           case "Image":
-            await addIcon(mapIconFolderPath + child.attrs.imageId + ".svg", { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
+            // @ts-ignore
+            let iconPath = await window.electronAPI.path.join([mapIconFolderPath, `${child.attrs.imageId}.svg`]);
+            await addIcon(iconPath, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
             break;
           case "Text":
             addText(child.attrs.text, { x: child.attrs.x, y: child.attrs.y }, newMarkerlayer);
@@ -913,8 +918,6 @@ async function changeMap(mapJson, markerJson) {
         }
       });
     }
-  } else {
-    console.error("map is null");
   }
 
   // Change the old layers to new layers

@@ -8,8 +8,9 @@ const fs = require("fs");
 const screenCapture = require("../screenCapture/screenCapture.js");
 const { scanImage } = require("../scanning/scanning.js");
 
-const notesFilePath = path.join(process.resourcesPath, "/notes.json");
-const noteScreenshotFolder = path.join(process.resourcesPath, "/screenshots/notes/");
+const notesDirectoryPath = path.join(process.resourcesPath, "notes");
+const notesFilePath = path.join(notesDirectoryPath, "notes.json");
+const noteScreenshotFolder = path.join(notesDirectoryPath, "screenshots");
 
 /**
  * Creates window for notes
@@ -52,6 +53,10 @@ function createWindow() {
     return noteScreenshotFolder;
   });
 
+  ipcMain.handle("notes:path-join", (_e, args) => {
+    return path.join(...args);
+  });
+
   ipcMain.handle("add-note", (_e, note) => {
     return addNote(note.text, note.screenshot);
   });
@@ -89,9 +94,9 @@ function createWindow() {
  * Creates needed folders and files
  */
 function initDirectories() {
-  if (!fs.existsSync(notesFilePath)) {
-    fs.writeFileSync(notesFilePath, "[]");
-    console.log("Notes file created");
+  if (!fs.existsSync(notesDirectoryPath)) {
+    fs.mkdirSync(notesDirectoryPath, { recursive: true });
+    console.log("Notes directory created");
   }
 
   if (!fs.existsSync(noteScreenshotFolder)) {
@@ -105,6 +110,10 @@ function initDirectories() {
  * @returns {Object} notes as a json object
  */
 function getNotes() {
+  if (!fs.existsSync(notesFilePath)) {
+    fs.writeFileSync(notesFilePath, "[]");
+  }
+
   return JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
 }
 
@@ -115,12 +124,12 @@ function getNotes() {
  */
 function addNote(noteText, screenshotBuffer) {
   return new Promise((resolve, reject) => {
-    let json = JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
+    let json = getNotes();
     let screenshotFileName = screenshotBuffer ? new Date().getTime().toString() : "";
 
     if (screenshotBuffer) {
-      let path = noteScreenshotFolder + screenshotFileName + ".png";
-      fs.writeFileSync(path, screenshotBuffer);
+      let screenshotPath = path.join(noteScreenshotFolder, `${screenshotFileName}.png`);
+      fs.writeFileSync(screenshotPath, screenshotBuffer);
       console.log(screenshotFileName + ".png saved.");
     }
 
@@ -149,7 +158,7 @@ function addNote(noteText, screenshotBuffer) {
  * @param {number} id
  */
 function deleteNote(id) {
-  let json = JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
+  let json = getNotes();
 
   return new Promise((resolve, reject) => {
     let index = json.findIndex((x) => x.id === id);
@@ -159,7 +168,9 @@ function deleteNote(id) {
 
       // remove screenshot if exists
       if (note.screenshot !== "") {
-        fs.unlinkSync(noteScreenshotFolder + note.screenshot + ".png");
+        let screenshotPath = path.join(noteScreenshotFolder, `${note.screenshot}.png`);
+
+        if (fs.existsSync(screenshotPath)) fs.unlinkSync(screenshotPath);
       }
 
       json.splice(index, 1);
@@ -184,7 +195,7 @@ function deleteNote(id) {
  */
 function updateNote(id, text) {
   return new Promise((resolve, reject) => {
-    let json = JSON.parse(fs.readFileSync(notesFilePath, "utf8"));
+    let json = getNotes();
     let index = json.findIndex((x) => x.id === id);
 
     if (index !== -1) {
