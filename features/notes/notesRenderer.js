@@ -139,7 +139,7 @@ async function refreshSourceList() {
 }
 
 /**
- * Appends all notes to the note container
+ * Prepends all notes to the note container
  */
 async function refreshNoteList() {
   // @ts-ignore
@@ -149,12 +149,12 @@ async function refreshNoteList() {
   const screenshotFolder = await window.electronAPI.path.noteScreenshotFolder();
 
   if (container) {
-    notes.forEach(async (note) => {
+    for (const note of notes) {
       // @ts-ignore
       const screenshotPath = note.screenshot !== "" ? await window.electronAPI.path.join([screenshotFolder, `${note.screenshot}.png`]) : "";
 
       await prependNoteToContainer(note.text, screenshotPath, note.id);
-    });
+    }
   }
 }
 
@@ -234,7 +234,7 @@ async function scanScreenshot(buffer) {
 }
 
 /**
- * Appends note element to the note container
+ * Prepends note element to the note container
  * @param {string} text
  * @param {string} screenshotPath
  * @param {number} id
